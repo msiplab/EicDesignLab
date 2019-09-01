@@ -28,7 +28,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="51.091947"
      inkscape:cx="10.657253"
-     inkscape:cy="15.344884"
+     inkscape:cy="15.344883"
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:window-width="3000"
@@ -55,7 +55,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -66,33 +66,33 @@
     <g
        id="g938">
       <rect
-         transform="rotate(-30)"
-         y="-0.99650544"
-         x="1.0210437"
+         y="0.19181035"
+         x="0.41507643"
          height="2.1719277"
          width="0.41590104"
          id="rect885"
-         style="fill:#808080;fill-opacity:1;stroke-width:0.26458332" />
+         style="fill:#808080;fill-opacity:1;stroke-width:0.26458332"
+         transform="rotate(-45)" />
       <rect
-         transform="rotate(-30)"
-         y="7.141171"
-         x="3.8244419"
+         y="7.0312209"
+         x="2.0986392"
          height="2.1719277"
          width="0.41590104"
          id="rect885-2"
-         style="fill:#808080;fill-opacity:1;stroke-width:0.26458332" />
+         style="fill:#808080;fill-opacity:1;stroke-width:0.26458332"
+         transform="rotate(-45)" />
       <rect
-         transform="matrix(-0.8660254,-0.5,-0.5,0.8660254,0,0)"
-         y="-5.3432503"
-         x="-6.5042858"
+         transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,0,0)"
+         y="-5.9545212"
+         x="-5.7288132"
          height="2.1719277"
          width="0.41590104"
          id="rect885-2-5"
          style="fill:#808080;fill-opacity:1;stroke-width:0.26458332" />
       <rect
-         transform="matrix(-0.8660254,-0.5,-0.5,0.8660254,0,0)"
-         y="2.8124616"
-         x="-3.7503226"
+         transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,0,0)"
+         y="0.88951564"
+         x="-4.0976691"
          height="2.1719277"
          width="0.41590104"
          id="rect885-2-5-0"
@@ -213,7 +213,7 @@
          transform="rotate(90)"
          r="0.25"
          cy="-8.1692324"
-         cx="6.0913968"
+         cx="4.8213968"
          id="path838"
          style="fill:#000000;fill-opacity:0;stroke-width:0.26458332" />
       <circle
@@ -221,7 +221,7 @@
          transform="rotate(90)"
          r="0.25"
          cy="-8.1692324"
-         cx="-1.528604"
+         cx="-0.25860402"
          id="path838-3"
          style="fill:#000000;fill-opacity:0;stroke-width:0.26458332" />
       <circle
@@ -229,7 +229,7 @@
          transform="rotate(90)"
          r="0.25"
          cy="-0.54923272"
-         cx="6.0913954"
+         cx="4.8213954"
          id="path838-5"
          style="fill:#000000;fill-opacity:0;stroke-width:0.26458332" />
       <circle
@@ -237,7 +237,7 @@
          transform="rotate(90)"
          r="0.25"
          cy="-0.54923272"
-         cx="-1.5286043"
+         cx="-0.25860426"
          id="path838-59"
          style="fill:#000000;fill-opacity:0;stroke-width:0.26458332" />
     </g>
