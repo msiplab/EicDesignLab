@@ -1,5 +1,4 @@
 import unittest
-import sys, os
 from gpiozero.pins.mock import MockFactory
 from gpiozero import Device, Button, LED
 from time import sleep
