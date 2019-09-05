@@ -10,12 +10,12 @@ from gpiozero import Button
 from signal import pause
 
 def main():
-	button = Button(25)
-	
-	button.when_pressed = callback_pressed
-	button.when_released = callback_released
-	
-	pause()
+        button = Button(25)
+
+        button.when_pressed = callback_pressed
+        button.when_released = callback_released
+
+        pause()
 	
 def callback_pressed():
 	print("Button is pressed")
