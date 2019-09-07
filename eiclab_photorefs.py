@@ -1,5 +1,5 @@
 """
-フォトリフレクタの応答
+フォトリフレクタのON/OFF入力
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
@@ -7,24 +7,26 @@
 	https://gpiozero.readthedocs.io/en/stable/index.html
 """
 import gpiozero
-from gpiozero import Button
-from signal import pause
+from gpiozero import Button, LED
 
 def main():
-  PIN_PR = 10
-  photoref = Button(PIN_PR,active_state=True,pull_up=None)
+	PIN_LD = 23
+	PIN_PR = [ 10, 9, 11, 8 ]
+	PR_STATE = [ 'Black', 'White' ]
 
-  photoref.when_pressed = callback_pressed
-  photoref.when_released = callback_released
+	red = LED(PIN_LD)
+	photorefs = [ Button(PIN_PR[idx],active_state=True,pull_up=None) \
+	for idx in range(0,len(PIN_PR)) ]
 
-  pause()
-
-def callback_pressed():
-  print("White")
-
-def callback_released():
-  print("Black")
+	while True:
+		redflag = False
+		for idx in range(0,len(PIN_PR)):
+			pr = photorefs[idx]
+			bw = PR_STATE[pr.is_pressed]
+			redflag = redflag or pr.is_pressed
+			print('{}:{} '.format(idx+1,bw),end=' ')
+		print()
+		red.value = redflag
 
 if __name__ == '__main__':
-  main()
-
+	main()
