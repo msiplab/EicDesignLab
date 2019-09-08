@@ -7,15 +7,15 @@
 	https://gpiozero.readthedocs.io/en/stable/index.html
 """
 import gpiozero
-from gpiozero import MCP3002, PWMLED
+from gpiozero import MCP3004, PWMLED
 from time import sleep
 
 def main():
         PIN_LD = 23
-        NUM_CH = 2
+        NUM_CH = 4
 
         red = PWMLED(PIN_LD)
-        photorefs = [ MCP3002(channel=idx) for idx in range(0,NUM_CH) ]
+        photorefs = [ MCP3004(channel=idx) for idx in range(0,NUM_CH) ]
 
         while True:
                 ave = 0.0
