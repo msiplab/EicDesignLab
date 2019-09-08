@@ -14,13 +14,12 @@ from signal import pause
 def main():
 	PIN_LD = 23
 	NUM_CH = 4
-	
+
 	red = PWMLED(PIN_LD)
-	photorefs = [ MCP3004(channel=idx) for idx in range(0,NUM_CH) ]    
-	
-	red.source = averaged(photorefs[0],photorefs[1]), \
-	photorefs[2],photorefs[3])
-		
+	photorefs = [ MCP3004(channel=idx) for idx in range(0,NUM_CH) ]
+
+	red.source = averaged(photorefs[0],photorefs[1], photorefs[2],photorefs[3])
+
 	pause()
 
 if __name__ == '__main__':
