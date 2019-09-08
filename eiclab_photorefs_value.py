@@ -4,29 +4,24 @@
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
 参考サイト
-	https://gpiozero.readthedocs.io/en/stable/index.html
+				https://gpiozero.readthedocs.io/en/stable/index.html
 """
 import gpiozero
 from gpiozero import MCP3004, PWMLED
-from time import sleep
+from gpiozero.tools import averaged
+from signal import pause
 
 def main():
-    PIN_LD = 23
-    NUM_CH = 4
-
-    red = PWMLED(PIN_LD)
-    photorefs = [ MCP3004(channel=idx) for idx in range(0,NUM_CH) ]
-
-    while True:
-        ave = 0.0
-        for idx in range(0,NUM_CH):
-            pr = photorefs[idx]
-            v = pr.value
-            ave += v
-            print('{}:{:4.2f} '.format(idx+1,v),end=' ')
-        print()
-        red.value = ave/NUM_CH
-        sleep(0.1)
+	PIN_LD = 23
+	NUM_CH = 4
+	
+	red = PWMLED(PIN_LD)
+	photorefs = [ MCP3004(channel=idx) for idx in range(0,NUM_CH) ]    
+	
+	red.source = averaged(photorefs[0],photorefs[1]), \
+	photorefs[2],photorefs[3])
+		
+	pause()
 
 if __name__ == '__main__':
 	main()
