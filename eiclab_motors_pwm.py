@@ -7,7 +7,8 @@
 	https://gpiozero.readthedocs.io/en/stable/index.html
 """
 from gpiozero import Robot
-from time import sleep
+from gpiozero.tools import sin_values, cos_values, post_delayed
+from signal import pause
 
 def main():
 	PIN_AIN1 = 6
@@ -16,27 +17,12 @@ def main():
 	PIN_BIN2 = 27
 	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2),pwm=True)
 
-	while True:
-		motors.forward(speed=0.5)
-		sleep(0.2)
-		motors.stop()
-		sleep(0.2)
-		motors.backward(speed=0.5)
-		sleep(0.2)
-		motors.stop()
-		sleep(0.2)
-		motors.forward(speed=1,curve_left=0.5)
-		sleep(0.2)
-		motors.reverse()
-		sleep(0.2)
-		motors.stop()
-		sleep(0.2)
-		motors.forward(speed=1,curve_right=0.5)
-		sleep(0.2)
-		motors.reverse()
-		sleep(0.2)
-		motors.stop()
-		sleep(0.2)
+	srcleft = post_delayed(sin_values(),0.1)
+	srcright = post_delayed(cos_values(),0.1)
+	
+	motors.source = zip(srcleft,srcright)
+	
+	pause()
 
 if __name__ == '__main__':
 	main()
