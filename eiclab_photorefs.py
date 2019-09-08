@@ -18,8 +18,8 @@ def main():
 	
 	red = LED(PIN_LD)
 	photorefs = [ Button(PIN_PR[idx], active_state=True, pull_up=None) \
-	for idx in range(0,len(PIN_PR)) ]
-	for idx in range(0,len(photorefs)):
+	for idx in range(len(PIN_PR)) ]
+	for idx in range(len(photorefs)):
 		photorefs[idx].label = idx+1		     
 	
 	red.source = any_values(photorefs[0],photorefs[1], \
