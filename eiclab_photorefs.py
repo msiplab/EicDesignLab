@@ -8,6 +8,7 @@
 """
 import gpiozero
 from gpiozero import Button, LED
+from time import sleep
 
 def main():
 	PIN_LD = 23
@@ -27,6 +28,7 @@ def main():
 			print('{}:{} '.format(idx+1,bw),end=' ')
 		print()
 		red.value = redflag
+                sleep(0.1)
 
 if __name__ == '__main__':
 	main()

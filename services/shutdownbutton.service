@@ -1,0 +1,9 @@
+[Unit]
+Description=Shutdown Daemon
+
+[Service]
+ExecStart=/usr/local/sbin/eiclab_shutdown_button.py
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
