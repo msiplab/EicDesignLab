@@ -13,15 +13,23 @@ from subprocess import check_call
 from signal import pause
 
 def main():
+    """ メイン関数 """
+    # 接続ピン
     PIN_BT = 3
-
+    
+    # ボタン長押し時間設定
     shutdown_btn = Button(PIN_BT, hold_time=2)
+    # ボタン長押し時のコールバック設定
     shutdown_btn.when_held = shutdown
-
+    
+    # 停止(Ctrl+c)まで待機
     pause()
 
 def shutdown():
+    """ シャットダウン関数　"""
+    # メッセージ通知
     check_call(['sudo', 'wall', 'poweroff'])
+    # シャットダウン
     check_call(['sudo', 'poweroff'])
 
 if __name__ == '__main__':

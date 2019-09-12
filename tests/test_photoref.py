@@ -1,116 +1,122 @@
+# coding: UTF-8
 import unittest
 from gpiozero.pins.mock import MockFactory
 from gpiozero import Device, Button, LED
 from time import sleep
 
 class TestPhotoRef(unittest.TestCase):
+    """ フォトリフレクタテストクラス """
 
-        def test_construction(self):
-                # Pin assignemnt
-                PIN_LD = 23
-                PIN_PR = 10
+    def test_construction(self):
+        """ 生成テスト """
+        # 接続ピン
+        PIN_LD = 23
+        PIN_PR = 10
 
-                # Construction of peripherals
-                led = LED(PIN_LD)
+        # 周辺設定
+        led = LED(PIN_LD)
 
-                # Expected values
-                valueLDExpctd = False # black
+        # 期待値
+        valueLDExpctd = False # black
 
-                # Construction of target
-                photoref  = Button(PIN_PR,active_state=True,pull_up=None)
+        # ターゲット生成
+        photoref  = Button(PIN_PR,active_state=True,pull_up=None)
 
-                # Connect
-                led.source = photoref
+        # 接続
+        led.source = photoref
 
-                # Actual values
-                valueLDActual = led.value
+        # 実際値
+        valueLDActual = led.value
 
-                # Evaluation
-                self.assertEqual(valueLDActual,valueLDExpctd)
+        # 評価
+        self.assertEqual(valueLDActual,valueLDExpctd)
 
-                # Destruction
-                sleep(0.1)
-                led.__del__()
-                photoref.__del__()
+        # 破棄
+        sleep(0.1)
+        led.__del__()
+        photoref.__del__()
 
-        def test_drive(self):
-                # Pin assignemnt
-                PIN_LD = 23
-                PIN_PR = 10
+    def test_drive(self):
+        """ 駆動テスト """
+        # 接続ピン
+        PIN_LD = 23
+        PIN_PR = 10
 
-                # Construction of peripherals
-                led = LED(PIN_LD)
+        # 周辺設定
+        led = LED(PIN_LD)
 
-                # Expected values
-                highLDExpctd = True # white
-                lowLDExpctd = False # black
+        # 期待値
+        highLDExpctd = True # white
+        lowLDExpctd = False # black
 
-                # Construction of targert
-                photoref  = Button(PIN_PR,active_state=True,pull_up=None)
-                photoref_pin = Device.pin_factory.pin(PIN_PR)
+        # ターゲット生成
+        photoref  = Button(PIN_PR,active_state=True,pull_up=None)
+        photoref_pin = Device.pin_factory.pin(PIN_PR)
 
-                # Connect devices
-                led.source = photoref
+        # 接続
+        led.source = photoref
 
-                # Drive photoref to high (white)
-                photoref_pin.drive_high()
-                sleep(0.1)
-                highLDActual = led.value
+        # Highでフォトリフレクタを駆動（白）
+        photoref_pin.drive_high()
+        sleep(0.1)
+        highLDActual = led.value
 
-                # Drive photoref to low (black)
-                photoref_pin.drive_low()
-                sleep(0.1)
-                lowLDActual = led.value
+        # Lowでフォトリフレクタを駆動（黒）
+        photoref_pin.drive_low()
+        sleep(0.1)
+        lowLDActual = led.value
 
-                # Evaluation
-                self.assertEqual(highLDActual,highLDExpctd)
-                self.assertEqual(lowLDActual,lowLDExpctd)
+        # 評価
+        self.assertEqual(highLDActual,highLDExpctd)
+        self.assertEqual(lowLDActual,lowLDExpctd)
 
-                # Destraction
-                sleep(0.1)
-                led.__del__()
-                photoref.__del__()
+        # 破棄
+        sleep(0.1)
+        led.__del__()
+        photoref.__del__()
 
-        def test_callback(self):
-                # Pin assignemnt
-                PIN_LD = 23
-                PIN_PR = 10
+    def test_callback(self):
+        """ コールバックテスト """
+        # 接続ピン
+        PIN_LD = 23
+        PIN_PR = 10
 
-                # Construction of peripherals
-                led = LED(PIN_LD)
+        # 周辺設定
+        led = LED(PIN_LD)
 
-                # Expected values
-                highLDExpctd = True # white
-                lowLDExpctd = False # black
+        # 期待値
+        highLDExpctd = True # white
+        lowLDExpctd = False # black
 
-                # Construction of targert
-                photoref  = Button(PIN_PR,active_state=True,pull_up=None)
-                photoref_pin = Device.pin_factory.pin(PIN_PR)
+        # ターゲット生成
+        photoref  = Button(PIN_PR,active_state=True,pull_up=None)
+        photoref_pin = Device.pin_factory.pin(PIN_PR)
 
-                # Set callback function
-                photoref.when_pressed = led.on
-                photoref.when_released = led.off
+        # コールバック関数設定
+        photoref.when_pressed = led.on
+        photoref.when_released = led.off
 
-                # Drive photoref to high (white)
-                photoref_pin.drive_high()
-                sleep(0.1)
-                highLDActual = led.value
+        # Highでフォトリフレクタを駆動（白）
+        photoref_pin.drive_high()
+        sleep(0.1)
+        highLDActual = led.value
 
-                # Drive photoref to low (black)
-                photoref_pin.drive_low()
-                sleep(0.1)
-                lowLDActual = led.value
+        # Low でフォトリフレクタを駆動（黒）
+        photoref_pin.drive_low()
+        sleep(0.1)
+        lowLDActual = led.value
 
-                # Evaluation
-                self.assertEqual(highLDActual,highLDExpctd)
-                self.assertEqual(lowLDActual,lowLDExpctd)
+        # 評価
+        self.assertEqual(highLDActual,highLDExpctd)
+        self.assertEqual(lowLDActual,lowLDExpctd)
 
-                # Destraction
-                sleep(0.1)
-                led.__del__()
-                photoref.__del__()
+        # 破棄
+        sleep(0.1)
+        led.__del__()
+        photoref.__del__()
 
 if __name__ == '__main__':
-        # Set the default pin factory to a mock factory
-        Device.pin_factory = MockFactory()
-        unittest.main()
+    # デフォルトのピンファクトリーをモックに設定
+    Device.pin_factory = MockFactory()
+    # ユニットテスト呼び出し
+    unittest.main()

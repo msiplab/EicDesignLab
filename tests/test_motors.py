@@ -1,117 +1,123 @@
+# coding: UTF-8
 import unittest
 from gpiozero.pins.mock import MockFactory
 from gpiozero import Device, Motor, LED
 from time import sleep
 
 class TestMotor(unittest.TestCase):
+	""" モーターテストクラス """
 
 	def test_construction(self):
-		# Pin assignemnt
+		""" 生成テスト """
+		# 接続ピン
 		PIN_AIN1 = 6
 		PIN_AIN2 = 5
 
-		# Expected values
+		# 期待値
 		valueAIN1Expctd = 0 # low
 		valueAIN2Expctd = 0 # low
 
-		# Construction of target
+		# ターゲット生成
 		motor = Motor(PIN_AIN1, PIN_AIN2, pwm=False)
 		ain1_pin = Device.pin_factory.pin(PIN_AIN1)
 		ain2_pin = Device.pin_factory.pin(PIN_AIN2)
 
-		# Actual values
+		# 実際値
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# Evaluation
+		# 評価
 		self.assertEqual(valueAIN1Actual,valueAIN1Expctd)
 		self.assertEqual(valueAIN2Actual,valueAIN2Expctd)
 
-		# Destruction
+		# 破棄
 		sleep(0.1)
 		motor.__del__()
 
 	def test_forward(self):
-		# Pin assignemnt
+		""" 前進テスト """
+		# 接続ピン
 		PIN_AIN1 = 6
 		PIN_AIN2 = 5
 
-		# Expected values
+		# 期待値
 		valueAIN1FwExpctd = 1 # high
 		valueAIN2FwExpctd = 0 # low
 		valueAIN1NuExpctd = 0 # low
 		valueAIN2NuExpctd = 0 # low
 
-		# Construction of target
+		# ターゲット生成
 		motor = Motor(PIN_AIN1, PIN_AIN2, pwm=False)
 		ain1_pin = Device.pin_factory.pin(PIN_AIN1)
 		ain2_pin = Device.pin_factory.pin(PIN_AIN2)
 
-		# Actual values
+		# 実際値
 		motor.forward()
 		sleep(0.1)                
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# Evaluation
+		# 評価
 		self.assertEqual(valueAIN1Actual,valueAIN1FwExpctd)
 		self.assertEqual(valueAIN2Actual,valueAIN2FwExpctd)
 
-		# Actual values
+		# 実際値
 		motor.stop()
 		sleep(0.1)                
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# Evaluation
+		# 評価
 		self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
 		self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
 
-		# Destruction
+		# 破棄
 		sleep(0.1)
 		motor.__del__()
 
 	def test_backward(self):
-		# Pin assignemnt
+		""" 後退テスト """
+		# 接続ピン
 		PIN_AIN1 = 6
 		PIN_AIN2 = 5
 
-		# Expected values
+		# 期待値
 		valueAIN1BwExpctd = 0 # low
 		valueAIN2BwExpctd = 1 # high
 		valueAIN1NuExpctd = 0 # low
 		valueAIN2NuExpctd = 0 # low
 
-		# Construction of target
+		# ターゲット生成
 		motor = Motor(PIN_AIN1, PIN_AIN2, pwm=False)
 		ain1_pin = Device.pin_factory.pin(PIN_AIN1)
 		ain2_pin = Device.pin_factory.pin(PIN_AIN2)
 
-		# Actual values
+		# 実際値
 		motor.backward()
 		sleep(0.1)                
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# Evaluation
+		# 評価
 		self.assertEqual(valueAIN1Actual,valueAIN1BwExpctd)
 		self.assertEqual(valueAIN2Actual,valueAIN2BwExpctd)
 
-		# Actual values
+		# 実際値
 		motor.stop()
 		sleep(0.1)
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# Evaluation
+		# 評価
 		self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
 		self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
 
-		# Destruction
+		# 破棄
 		sleep(0.1)
 		motor.__del__()
 
 if __name__ == '__main__':
-	# Set the default pin factory to a mock factory
+	# デフォルトのピンファクトリーをモックに設定
 	Device.pin_factory = MockFactory()
+	# ユニットテスト呼び出し
 	unittest.main()

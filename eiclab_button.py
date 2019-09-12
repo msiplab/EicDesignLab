@@ -1,3 +1,4 @@
+# coding: UTF-8
 """
 ボタンの押下検出
 
@@ -9,12 +10,15 @@
 from gpiozero import Button
 
 def main():
+	""" メイン関数 """
+	# ボタン設定
 	button = Button(25)
-
+	
+	# ループ処理
 	while True:
-		if button.is_pressed:
+		if button.is_pressed: # ボタン押下時
 			print("Button is pressed")
-		else:
+		else: # ボタン解放時
 			print("Button is not pressed")
 
 if __name__ == '__main__':

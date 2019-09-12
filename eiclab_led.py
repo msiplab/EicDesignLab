@@ -1,3 +1,4 @@
+# coding: UTF-8
 """
 LED の点灯と消灯
 
@@ -10,11 +11,16 @@ from gpiozero import LED
 from time import sleep
 
 def main():
+	""" メイン関数 """
+	# 赤色LED設定
 	red = LED(23)
 	
+	# ループ処理
 	while True:
+		# 1秒間ON
 		red.on()
 		sleep(1)
+		# 1秒間oFF
 		red.off()
 		sleep(1)
 

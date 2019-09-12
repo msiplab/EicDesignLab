@@ -1,3 +1,4 @@
+# coding: UTF-8
 """
 LED の明るさ調整
 
@@ -10,14 +11,20 @@ from gpiozero import PWMLED
 from time import sleep
 
 def main():
+	""" メイン関数 """
+	# LED設定(PWM)
 	red = PWMLED(23)
 	
+	# ループ処理
 	while True:
-		red.value = 0 # off
+		# 1秒間 off
+		red.value = 0
 		sleep(1)
-		red.value = 0.5 # 半分の明るさ
+		# 1秒間明るさ50%
+		red.value = 0.5
 		sleep(1)
-		red.value = 1 # 最大の明るさ
+		# 1秒間明るさ100%
+		red.value = 1 
 		sleep(1)
 
 if __name__ == '__main__':
