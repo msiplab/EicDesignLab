@@ -40,44 +40,43 @@ Raspberry Pi Zero W のセットアップや機能については以下の Wiki 
 
 Python の便利なモジュールとそのRaspbian 上でのインストール方法をまとめます。
 
-- 準備
-パッケージの更新方法は以下の通りです。時間を要するので余裕をもって実施してください。
-
-    $ sudo apt-get update
-    $ sudo apt-get upgrade
-    $ sudo apt-get dist-upgrade
-    $ sudo apt-get install python3-dev python3-setuptools python3-pip
-
+- 準備 パッケージの更新方法は以下の通りです。時間を要するので余裕をもって実施してください。
+    
+      $ sudo apt-get update
+      $ sudo apt-get upgrade
+      $ sudo apt-get dist-upgrade
+      $ sudo apt-get install python3-dev python3-setuptools python3-pip
+    
 - Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
 
-    $ sudo apt-get install python3-pandas
+      $ sudo apt-get install python3-pandas
 
 - NumPy 高密度のデータ配列を効率的に格納し処理する ndarray オブジェクトを提供。
 
-    $ sudo apt-get install python3-numpy
+      $ sudo apt-get install python3-numpy
 
 - SciPy 統計，最適化，線形代数，信号・画像処理，常微分方程式ソルバなどの機能を提供。
 
-    $ sudo apt-get install python3-scipy
+      $ sudo apt-get install python3-scipy
 
 - matplotlib (+ seaborn) Pythonの柔軟なデータ可視化機能を提供。
 
-    $ sudo apt-get install python3-matplotlib python3-seaborn
+      $ sudo apt-get install python3-matplotlib python3-seaborn
 
 - scikit-learn 機械学習アルゴリズムの効率的なPython実装。
 
-    $ sudo apt-get install python3-sklearn
+      $ sudo apt-get install python3-sklearn
 
 - pytransitions 軽量な有限状態機械オブジェクトを提供。
 
-    $ sudo apt-get install python3-transitions
+      $ sudo apt-get install python3-transitions
 
 - python-control フィードバック制御システムの分析と設計のための基本的な操作を提供。
 
-    $ sudo apt-get install gfortran
-    $ sudo apt-get install libblas-dev libatlas-base-dev liblapack-dev
-    $ sudo pip3 install slycot
-    $ sudo pip3 install control
+      $ sudo apt-get install gfortran
+      $ sudo apt-get install libblas-dev libatlas-base-dev liblapack-dev
+      $ sudo pip3 install slycot
+      $ sudo pip3 install control
 
 ***
 新潟大学工学部工学科　電子情報通信プログラム　新保一成，村松正吾，岡寿樹
