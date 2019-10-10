@@ -21,7 +21,7 @@ def prs_to_mtrs(photorefs):
 	pr2 = photorefs[2].value
 	pr3 = photorefs[3].value
 	
-	# モーター制御の強度値を計算
+	# モーター制御の強度値を計算（ここを工夫）
 	left = (pr0+pr1)/2.0
 	right = (pr2+pr3)/2.0
 	
