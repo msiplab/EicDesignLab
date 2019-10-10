@@ -13,27 +13,27 @@ import gpiozero
 from gpiozero import MCP3004, Robot
 from signal import pause
 
-def prs_to_mtrs(photorefs):
+def prs2mtrs(photorefs):
         """ フォトリフレクタの値をモーター制御の強度値に変換 """
-	# フォトリフレクタの値を読み出し
+        # フォトリフレクタの値を読み出し
         pr0 = photorefs[0].value
-	pr1 = photorefs[1].value
-	pr2 = photorefs[2].value
-	pr3 = photorefs[3].value
-	
-	# モーター制御の強度値を計算（ここを工夫）
-	left = (pr0+pr1)/2.0
-	right = (pr2+pr3)/2.0
-	
-	# 出力範囲を[-1,1]に直して出力
-	return (clamped(left),clamped(right))
+        pr1 = photorefs[1].value
+        pr2 = photorefs[2].value
+        pr3 = photorefs[3].value
+
+        # モーター制御の強度値を計算（ここを工夫）
+        left = (pr0+pr1)/2.0
+        right = (pr2+pr3)/2.0
+
+        # 出力範囲を[-1,1]に直して出力
+        return (clamped(left),clamped(right))
 
 def clamped(v):
         return max(-1,min(1,v))
                   
 def line_follow(photorefs):
         while True:
-                yield prs_to_mtrs(photorefs)
+                yield prs2mtrs(photorefs)
 
 def main():
         """ メイン関数 """
