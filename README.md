@@ -46,6 +46,11 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ sudo apt-get upgrade
       $ sudo apt-get dist-upgrade
       $ sudo apt-get install python3-dev python3-setuptools python3-pip
+      
+  Docker のインストールは以下の通りです。※TensorFlowのインストールに使います。
+      
+      $ curl -sSL https://get.docker.com | sh
+      $ sudo usermod -aG docker pi
     
 - Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
 
@@ -77,6 +82,11 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ sudo apt-get install libblas-dev libatlas-base-dev liblapack-dev
       $ sudo pip3 install slycot
       $ sudo pip3 install control
+      
+- TensorFlow 深層学習フレームワークを提供。
+
+      $ docker pull tensorflow/tensorflow
+      $ docker run -it -p 8888:8888 tensorflow/tensorflow
 
 ***
 新潟大学工学部工学科　電子情報通信プログラム　新保一成，村松正吾，岡寿樹
