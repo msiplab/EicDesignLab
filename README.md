@@ -91,5 +91,9 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ docker pull tensorflow/tensorflow
       $ docker run -it -p 8888:8888 tensorflow/tensorflow
 
+## Google Colab
+
+- https://colab.research.google.com/
+
 ***
 新潟大学工学部工学科　電子情報通信プログラム　新保一成，村松正吾，岡寿樹
