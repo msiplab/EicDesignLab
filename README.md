@@ -51,7 +51,9 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       
       $ curl -sSL https://get.docker.com | sh
       $ sudo usermod -aG docker pi
-    
+   
+  ログオフ後，再度ログインしてください。
+  
 - Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
 
       $ sudo apt-get install python3-pandas
