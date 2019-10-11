@@ -49,6 +49,7 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       
   Docker のインストールは以下の通りです。※TensorFlowのインストールに使います。
       
+      $ sudo apt-get dist-upgrade
       $ curl -sSL https://get.docker.com | sh
       $ sudo usermod -aG docker pi
    
