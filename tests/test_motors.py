@@ -27,12 +27,12 @@ class TestMotor(unittest.TestCase):
 		valueAIN2Actual = ain2_pin.state
 
 		# 評価
-		self.assertEqual(valueAIN1Actual,valueAIN1Expctd)
-		self.assertEqual(valueAIN2Actual,valueAIN2Expctd)
-
-		# 破棄
-		sleep(0.1)
-		motor.__del__()
+		try:
+			self.assertEqual(valueAIN1Actual,valueAIN1Expctd)
+			self.assertEqual(valueAIN2Actual,valueAIN2Expctd)
+			sleep(0.1)
+		finally:
+			motor.close()
 
 	def test_forward(self):
 		""" 前進テスト """
@@ -68,12 +68,12 @@ class TestMotor(unittest.TestCase):
 		valueAIN2Actual = ain2_pin.state
 
 		# 評価
-		self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
-		self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
-
-		# 破棄
-		sleep(0.1)
-		motor.__del__()
+		try:
+			self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
+			self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
+			sleep(0.1)
+		finally:
+			motor.close()
 
 	def test_backward(self):
 		""" 後退テスト """
@@ -98,23 +98,24 @@ class TestMotor(unittest.TestCase):
 		valueAIN1Actual = ain1_pin.state
 		valueAIN2Actual = ain2_pin.state
 
-		# 評価
-		self.assertEqual(valueAIN1Actual,valueAIN1BwExpctd)
-		self.assertEqual(valueAIN2Actual,valueAIN2BwExpctd)
+		try:
+			# 評価
+			self.assertEqual(valueAIN1Actual,valueAIN1BwExpctd)
+			self.assertEqual(valueAIN2Actual,valueAIN2BwExpctd)
 
-		# 実際値
-		motor.stop()
-		sleep(0.1)
-		valueAIN1Actual = ain1_pin.state
-		valueAIN2Actual = ain2_pin.state
+			# 実際値
+			motor.stop()
+			sleep(0.1)
+			valueAIN1Actual = ain1_pin.state
+			valueAIN2Actual = ain2_pin.state
 
-		# 評価
-		self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
-		self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
-
-		# 破棄
-		sleep(0.1)
-		motor.__del__()
+			# 評価
+			self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
+			self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
+			sleep(0.1)
+		finally:
+			# 終了
+			motor.close()
 
 if __name__ == '__main__':
 	# デフォルトのピンファクトリーをモックに設定
