@@ -32,7 +32,7 @@
 
 ## Wiki
 
-Raspberry Pi Zero W のセットアップや機能については以下の Wiki サイトにまとめる予定です。適宜参照してください。
+マニュアルの訂正や補足事項など以下の Wiki サイトにまとめています。適宜参照してください。
 
 - https://github.com/msiplab/EicDesignLab/wiki
 
