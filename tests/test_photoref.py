@@ -6,7 +6,15 @@ from time import sleep
 
 class TestPhotoRef(unittest.TestCase):
     """ フォトリフレクタテストクラス """
-
+ 
+    def setUp(self):
+        """ テスト前処理 """
+        pass 
+ 
+    def tearDown(self):
+        """ テスト後処理 """
+        pass
+        
     def test_construction(self):
         """ 生成テスト """
         # 接続ピン
@@ -29,12 +37,12 @@ class TestPhotoRef(unittest.TestCase):
         valueLDActual = led.value
 
         # 評価
-        self.assertEqual(valueLDActual,valueLDExpctd)
-
-        # 破棄
-        sleep(0.1)
-        led.__del__()
-        photoref.__del__()
+        try:
+            self.assertEqual(valueLDActual,valueLDExpctd)
+            sleep(0.1)
+        finally:
+            led.close()
+            photoref.close()
 
     def test_drive(self):
         """ 駆動テスト """
@@ -67,13 +75,13 @@ class TestPhotoRef(unittest.TestCase):
         lowLDActual = led.value
 
         # 評価
-        self.assertEqual(highLDActual,highLDExpctd)
-        self.assertEqual(lowLDActual,lowLDExpctd)
-
-        # 破棄
-        sleep(0.1)
-        led.__del__()
-        photoref.__del__()
+        try:
+            self.assertEqual(highLDActual,highLDExpctd)
+            self.assertEqual(lowLDActual,lowLDExpctd)
+            sleep(0.1)
+        finally:
+            led.close()
+            photoref.close()
 
     def test_callback(self):
         """ コールバックテスト """
@@ -107,13 +115,13 @@ class TestPhotoRef(unittest.TestCase):
         lowLDActual = led.value
 
         # 評価
-        self.assertEqual(highLDActual,highLDExpctd)
-        self.assertEqual(lowLDActual,lowLDExpctd)
-
-        # 破棄
-        sleep(0.1)
-        led.__del__()
-        photoref.__del__()
+        try:
+            self.assertEqual(highLDActual,highLDExpctd)
+            self.assertEqual(lowLDActual,lowLDExpctd)
+            sleep(0.1)
+        finally:
+            led.close()
+            photoref.close()
 
 if __name__ == '__main__':
     # デフォルトのピンファクトリーをモックに設定
