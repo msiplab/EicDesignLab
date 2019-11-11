@@ -86,6 +86,10 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ sudo pip3 install slycot
       $ sudo pip3 install control
       
+- Pygame 主にゲームを対象としたGUIアプリ制作に役立つモジュールを提供。
+
+      $ sudo apt-get install python3-pygame
+      
 - TensorFlow 深層学習フレームワークを提供。
 
       $ docker pull tensorflow/tensorflow
