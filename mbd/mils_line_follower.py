@@ -101,17 +101,17 @@ class LFModelInTheLoopSimulation(object):
 
     # シミュレータ遷移の定義
     TRANSITIONS = (
-        {'trigger': 'init',     'source': 'sinit',   'dest': 'slocate'},
-        {'trigger': 'locate',   'source': 'slocate', 'dest': 'srotate'},    
-        {'trigger': 'rotate',   'source': 'srotate', 'dest': 'swait'  },        
-        {'trigger': 'relocate', 'source': 'srotate', 'dest': 'slocate'},            
-        {'trigger': 'relocate', 'source': 'swait',   'dest': 'slocate'},                
-        {'trigger': 'start',    'source': 'swait',   'dest': 'srun'   },
-        {'trigger': 'stop',     'source': 'srun',    'dest': 'swait'  },
-        {'trigger': 'quit',     'source': 'slocate', 'dest': 'squit'  },
-        {'trigger': 'quit',     'source': 'srotate', 'dest': 'squit'  },
-        {'trigger': 'quit',     'source': 'swait',   'dest': 'squit'  },
-        {'trigger': 'quit',     'source': 'srun',    'dest': 'squit'  }            
+        {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate'},
+        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate'},    
+        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait'  },        
+        {'trigger': 'reset',       'source': 'srotate', 'dest': 'slocate'},            
+        {'trigger': 'reset',       'source': 'swait',   'dest': 'slocate'},                
+        {'trigger': 'start',       'source': 'swait',   'dest': 'srun'   },
+        {'trigger': 'stop',        'source': 'srun',    'dest': 'swait'  },
+        {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit'  },
+        {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit'  },
+        {'trigger': 'quit',        'source': 'swait',   'dest': 'squit'  },
+        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit'  }            
     )
 
     def __init__(self, course, fps = 10):
@@ -123,14 +123,14 @@ class LFModelInTheLoopSimulation(object):
         self._width  = course.width
         self._height = course.height
         self._screen = pygame.display.set_mode((self._width,self._height))
-        self._screen.fill(self.WHITE)
     
         # 状態遷移機械(SFM)の設定
         self._sfm = Machine(\
             model=self, \
             states=self.STATES, \
             initial=self.STATES[0], \
-            transitions=self.TRANSITIONS \
+            transitions=self.TRANSITIONS, \
+            ignore_invalid_triggers=True
         )
 
     def run(self):
@@ -145,6 +145,23 @@ class LFModelInTheLoopSimulation(object):
                     pygame.quit()
                     sys.exit()
 
+            key = pygame.key.get_pressed()
+            if key[pygame.K_i] == 1: # i 初期化終了
+                self.initialized()
+            if key[pygame.K_l] == 1: # l 位置設定終了
+                self.located()
+            if key[pygame.K_r] == 1: # r 回転設定終了
+                self.rotated()                    
+            if key[pygame.K_ESCAPE] == 1: # ESC 位置回転リセット
+                self.reset()                                       
+            if key[pygame.K_s] == 1: # s スタート
+                self.start()                                                                
+            if key[pygame.K_t] == 1: # t ストップ
+                self.stop()                                                                                
+            if key[pygame.K_q] == 1: # q 終了
+                self.quit()                                                                                                
+
+            self._screen.fill(self.WHITE)
             sur = font.render(self.state, True, self.BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
 
