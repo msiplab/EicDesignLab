@@ -11,7 +11,7 @@
 
 プロパティ
 
-- コースデータ（白黒画像）
+- コースデータ（モノクロ画像）
 - サンプリングレート（秒）
 - ライントレーサー
   - 制御：　フォトリフレクタ入力　-> [制御モジュール] -> モーター制御信号
@@ -36,6 +36,7 @@
 from transitions import Machine
 import pygame
 import sys
+import math
 
 # コースデータ画像
 COURSE_IMG = 'lfcourse.png'
@@ -45,8 +46,21 @@ def main():
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG)
 
+    # シャフト中心(+)からのフォトリフレクタ(*)の
+    # 相対座標[mm]
+    #  
+    #       --|--          * pr1 (dx1,dy1)
+    #         |           * pr2 (dx2,dy2)       
+    #  (0,0)  + -------------            → x
+    #   ↓     |           * pr3 (dx3,dy3)       
+    #   y   --|--          * pr4 (dx4,dy4)
+    #
+    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4))
+    mpp = ((120,-40), (110,-20), (110,20), (120,40))
+    lf = LFPhysicalModel(course, weight = 200, mntposprs = mpp)
+
     # MILSオブジェクトのインスタンス生成
-    mils = LFModelInTheLoopSimulation(course)
+    mils = LFModelInTheLoopSimulation(lf)
 
     # シミュレーションの実行
     mils.run()
@@ -69,7 +83,49 @@ class LFPhysicalModel:
         入力　モーター制御信号 [-1,1]x2        
         出力　フォトリフレクタの値 [0,1]x4 
     """    
-    pass
+    
+    SHAFT_LENGTH = 50 # mm
+    TIRE_DIAMETER = 20 # mm
+
+    BLUE = (  0,  0, 255)
+
+    def __init__(self, \
+        course, \
+        weight = 200, \
+        mntposprs =  ((120,-40), (110,-20), (110,20), (120,40)) \
+        ):
+        self._weight = weight
+        self._mntposprs = mntposprs
+        self._course = course
+        self._x = self.SHAFT_LENGTH + 10 # mm
+        self._y = self.SHAFT_LENGTH + 10 # mm
+        # 寸法の設定
+
+    @property
+    def course(self):
+        return self._course        
+
+    def set_position(self,x,y):
+        self._x = x # mm
+        self._y = y # mm
+
+    def set_angle(self,angle):
+        self._angle = angle # rad
+    
+    def set_interval(self,interval):
+        self._interval = interval
+
+    def draw_body(self,screen):
+        res = self._course.resolution # mm/pixel
+        pos = [int(self._x/res) , int(self._y/res)] # pixels
+        rad = int(self.SHAFT_LENGTH/res)
+        pygame.draw.circle(screen, self.BLUE, pos, rad)
+
+    def drive(self, left, right):
+        pass
+
+    def sense(self):
+        return []
 
 class LFCourse:
     """ コースデータ 
@@ -96,6 +152,10 @@ class LFCourse:
         return self._height
 
     @property
+    def resolution(self):
+        return self._res
+
+    @property
     def realwidth(self):
         return self._width*self._res
 
@@ -118,6 +178,22 @@ class LFModelInTheLoopSimulation(object):
     STATES = ('sinit','slocate','srotate','swait','srun','squit')
 
     # シミュレータ遷移の定義
+    #
+    #               +-----------------------+
+    #               ↓                       |
+    # (sinit) → (slocate) ⇔ (srotate) → (swait) ⇔ (srun)
+    #               |            |          |          |                                    
+    #               +------------+----+-----+----------+
+    #                                 ↓
+    #                              (squit) 
+    #
+    # sinit:   初期設定*
+    # slocate: ライントレーサー位置設定
+    # srotate: ライントレーサー角度設定
+    # swait:   走行準備
+    # srun:    走行
+    # squit:   終了
+    #
     TRANSITIONS = (
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate'},
         {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate'},    
@@ -132,16 +208,17 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'quit',        'source': 'srun',    'dest': 'squit'  }            
     )
 
-    def __init__(self, course, fps = 10):
+    def __init__(self, linefollower, fps = 10):
 
         self._clock = pygame.time.Clock()
         self._fps = fps
 
         # スクリーン設定
-        self._width  = course.width
-        self._height = course.height
+        self._linefollower = linefollower
+        self._course = self._linefollower.course
+        self._width  = self._course.width
+        self._height = self._course.height
         self._screen = pygame.display.set_mode((self._width,self._height))
-        self._course = course
 
         # 状態遷移機械(SFM)の設定
         self._sfm = Machine(\
@@ -182,6 +259,7 @@ class LFModelInTheLoopSimulation(object):
 
             self._screen.blit(self._course.image,[0, 0])
             #self._screen.fill(self.WHITE)
+            self._linefollower.draw_body(self._screen)
             sur = font.render(self.state, True, self.BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
 
