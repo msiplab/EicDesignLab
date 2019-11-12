@@ -76,13 +76,16 @@ class LFCourse:
     
         ライントレース用のコースデータを保持する。
 
+        res [mm/pixel]
+
     """
     def __init__(self,filename,res=1.25):
         self._filename = filename
-        self._width  = 1280
-        self._height = 720
+        self._width  = 640
+        self._height = 360
         self._res = res
-        self._image = pygame.image.load(self._filename)        
+        image = pygame.image.load(self._filename)
+        self._image = pygame.transform.scale(image,(640,360))
 
     @property
     def width(self):
