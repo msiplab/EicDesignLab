@@ -99,7 +99,6 @@ class LFPhysicalModel:
         self._course = course
         self._x = self.SHAFT_LENGTH + 10 # mm
         self._y = self.SHAFT_LENGTH + 10 # mm
-        # 寸法の設定
 
     @property
     def course(self):
@@ -117,9 +116,19 @@ class LFPhysicalModel:
 
     def draw_body(self,screen):
         res = self._course.resolution # mm/pixel
-        pos = [int(self._x/res) , int(self._y/res)] # pixels
-        rad = int(self.SHAFT_LENGTH/res)
-        pygame.draw.circle(screen, self.BLUE, pos, rad)
+        #pos = [int(self._x/res) , int(self._y/res)] # pixels
+        #rad = int(self.SHAFT_LENGTH/res)
+        #pygame.draw.circle(screen, self.BLUE, pos, rad)
+        pos_cx_mm = self._x # pixel
+        pos_cy_mm = self._y # pixel
+        car_width_mm = 120 # 車体幅 in mm
+        car_length_mm = 160 # 車体長 in mm
+        pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH)+10
+        pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH)+10
+        car_width_px = car_width_mm/res # 車体幅 in pixel  
+        car_length_px = car_length_mm/res  # 車体長 in mm        
+        rect = [pos_topleft_x_px, pos_topleft_y_px, car_length_px, car_width_px] # pixels        
+        pygame.draw.rect(screen, self.BLUE, rect)        
 
     def drive(self, left, right):
         pass
