@@ -77,9 +77,12 @@ class LFCourse:
         ライントレース用のコースデータを保持する。
 
     """
-    def __init__(self,filename):
-        self._width  = 800
-        self._height = 600
+    def __init__(self,filename,res=1.25):
+        self._filename = filename
+        self._width  = 1280
+        self._height = 720
+        self._res = res
+        self._image = pygame.image.load(self._filename)        
 
     @property
     def width(self):
@@ -87,7 +90,19 @@ class LFCourse:
 
     @property
     def height(self):
-        return self._height        
+        return self._height
+
+    @property
+    def realwidth(self):
+        return self._width*self._res
+
+    @property
+    def realheight(self):
+        return self._height*self._res
+
+    @property
+    def image(self):
+        return self._image
 
 class LFModelInTheLoopSimulation(object):
     """ ライントレースMILSクラス """
@@ -123,7 +138,8 @@ class LFModelInTheLoopSimulation(object):
         self._width  = course.width
         self._height = course.height
         self._screen = pygame.display.set_mode((self._width,self._height))
-    
+        self._course = course
+
         # 状態遷移機械(SFM)の設定
         self._sfm = Machine(\
             model=self, \
@@ -161,7 +177,8 @@ class LFModelInTheLoopSimulation(object):
             if key[pygame.K_q] == 1: # q 終了
                 self.quit()                                                                                                
 
-            self._screen.fill(self.WHITE)
+            self._screen.blit(self._course.image,[0, 0])
+            #self._screen.fill(self.WHITE)
             sur = font.render(self.state, True, self.BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
 
