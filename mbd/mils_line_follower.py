@@ -250,8 +250,8 @@ class LFModelInTheLoopSimulation(object):
     #
     TRANSITIONS = (
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
-        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate' },
-        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate' },
+        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },
+        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate', 'after': 'rflag_false' },
         {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },        
         {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate' },                
         {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit'  },
@@ -280,6 +280,9 @@ class LFModelInTheLoopSimulation(object):
             transitions=self.TRANSITIONS, \
             ignore_invalid_triggers=True
         )
+        self._flag_drag = False
+        self._flag_rot  = False
+
 
     def run(self):
 
@@ -299,8 +302,6 @@ class LFModelInTheLoopSimulation(object):
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
                 # 初期化設定
-                flag_drag = False
-                flag_rot  = False
 
                 # スタート，ストップ，終了
 
@@ -319,20 +320,16 @@ class LFModelInTheLoopSimulation(object):
                 rect = self._linefollower.get_rect_px()
                 isMouseIn = rect[0] < mouseX and mouseX < rect[0]+rect[2] and \
                     rect[1] < mouseY and mouseY < rect[1]+rect[3]
-                if (flag_drag or isMouseIn) and mBtn1 == 1:
-                    if not flag_drag:
+                if (self._flag_drag or isMouseIn) and mBtn1 == 1:
+                    if not self._flag_drag:
                         preX, preY = mouseX, mouseY
-                        flag_drag = True
+                        self._flag_drag = True
                     dx_px, dy_px = mouseX - preX, mouseY - preY
                     self._linefollower.move_px(dx_px,dy_px)                    
                     preX, preY = mouseX, mouseY
                     #msg = font.render(txt1 +' '+ txt2, True, GREEN)
-                elif flag_drag and mBtn1 == 0: # 設定終了判定
-                    flag_drag = False
+                elif self._flag_drag and mBtn1 == 0: # 設定終了判定
                     self.located()
-                else:
-                    flag_drag = False
-                    #msg = font.render('Out of car', True, GREEN)
 
             if self.state == 'srotate': 
                 # 方向設定
@@ -340,22 +337,19 @@ class LFModelInTheLoopSimulation(object):
                 txt1 = '{},{}'.format(mouseX, mouseY)
                 mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
                 txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
-                msg = font.render(txt1 +' '+ txt2 + str(flag_rot), True, GREEN)                
+                msg = font.render(txt1 +' '+ txt2 + str(self._flag_rot), True, GREEN)                
                 # 左クリックならば車体を回転
                 if mBtn1 == 1:
-                    if not flag_rot:
+                    if not self._flag_rot:
                         center_px = self._linefollower.get_center_px()
                         angle0 = self._linefollower.angle
-                        flag_rot = True
+                        self._flag_rot = True
                     dx_px = mouseX - center_px[0]
                     dy_px = mouseY - center_px[1]
                     angle = math.atan2(dy_px,dx_px)
                     self._linefollower.rotate(angle0+angle)
-                elif flag_rot and mBtn1 == 0: # 設定終了判定
-                    flag_rot = False
+                elif self._flag_rot and mBtn1 == 0: # 設定終了判定
                     self.rotated()
-                else:
-                    flag_rot = False
 
             if key[pygame.K_ESCAPE] == 1: # ストップ
                 self.stop()                                       
@@ -372,6 +366,12 @@ class LFModelInTheLoopSimulation(object):
 
             pygame.display.update()
             self._clock.tick(self._fps)
+
+    def lflag_false(self):
+        self._flag_drag = False
+
+    def rflag_false(self):
+        self._flag_rot = False    
 
 if __name__ == '__main__':
     main()
