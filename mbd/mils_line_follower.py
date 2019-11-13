@@ -34,9 +34,16 @@
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 """
 from transitions import Machine
+import numpy as np
 import pygame
 import sys
 import math
+
+# 色の定義
+WHITE = (255, 255, 255)
+BLACK = (  0,   0,   0)
+GREEN = (  0, 255,   0)    
+BLUE  = (  0,   0, 255)
 
 # コースデータ画像
 COURSE_IMG = 'lfcourse.png'
@@ -87,8 +94,6 @@ class LFPhysicalModel:
     SHAFT_LENGTH = 50 # mm
     TIRE_DIAMETER = 20 # mm
 
-    BLUE = (  0,  0, 255)
-
     def __init__(self, \
         course, \
         weight = 200, \
@@ -99,10 +104,15 @@ class LFPhysicalModel:
         self._course = course
         self._x = self.SHAFT_LENGTH + 10 # mm
         self._y = self.SHAFT_LENGTH + 10 # mm
+        self._angle = 0 # rad
 
     @property
     def course(self):
-        return self._course        
+        return self._course
+    
+    @property
+    def angle(self):
+        return self._angle
 
     def set_position_mm(self,x,y):
         self._x = x # mm
@@ -111,20 +121,44 @@ class LFPhysicalModel:
     def move_px(self,dx_px,dy_px):
         res = self._course.resolution # mm/pixel        
         self._x = self._x + dx_px*res # mm
-        self._y = self._y + dy_px*res # mm        
+        self._y = self._y + dy_px*res # mm   
 
-    def set_angle(self,angle):
+    def rotate(self,angle):
         self._angle = angle # rad
-    
+
     def set_interval(self,interval):
         self._interval = interval
 
     def draw_body(self,screen):
         #pos = [int(self._x/res) , int(self._y/res)] # pixels
         #rad = int(self.SHAFT_LENGTH/res)
-        #pygame.draw.circle(screen, self.BLUE, pos, rad)
-        rect = self.get_rect_px()
-        pygame.draw.rect(screen, self.BLUE, rect) 
+        #pygame.draw.circle(screen, BLUE, pos, rad)
+        #rect = self.get_rect_px()
+        #pygame.draw.rect(screen, BLUE, rect) 
+        rect = np.asarray(self.get_rect_px())
+        center = np.asarray(self.get_center_px())
+        #pygame.draw.rect(screen, BLUE, rect.tolist())
+        apos00 = np.dot([[1,0,0,0],[0,1,0,0]],rect) - center
+        apos10 = np.dot([[1,0,0,0],[0,1,0,1]],rect) - center
+        apos01 = np.dot([[1,0,1,0],[0,1,0,0]],rect) - center
+        apos11 = np.dot([[1,0,1,0],[0,1,0,1]],rect) - center
+        #
+        angle = self._angle
+        rotate = np.asarray([
+            [ np.cos(angle), -np.sin(angle) ],
+            [ np.sin(angle),  np.cos(angle) ]
+        ])
+        apos00 = rotate.dot(apos00)
+        apos10 = rotate.dot(apos10)
+        apos01 = rotate.dot(apos01)
+        apos11 = rotate.dot(apos11)
+        #
+        pos00 = (apos00 + center).tolist()
+        pos10 = (apos10 + center).tolist()
+        pos01 = (apos01 + center).tolist()
+        pos11 = (apos11 + center).tolist()
+        #
+        pygame.draw.polygon(screen, BLUE, [pos00,pos10,pos01,pos11],0)
 
     def get_rect_px(self):
         res = self._course.resolution # mm/pixel
@@ -138,6 +172,14 @@ class LFPhysicalModel:
         car_length_px = car_length_mm/res  # 車体長 in mm        
         rect = [pos_topleft_x_px,pos_topleft_y_px, car_length_px, car_width_px]
         return rect
+
+    def get_center_px(self):
+        res = self._course.resolution # mm/pixel        
+        cx_mm = self._x # pixel
+        cy_mm = self._y # pixel
+        cx_px = cx_mm/res
+        cy_px = cy_mm/res
+        return [cx_px,cy_px]
 
     def drive(self, left, right):
         pass
@@ -188,21 +230,16 @@ class LFCourse:
 class LFModelInTheLoopSimulation(object):
     """ ライントレースMILSクラス """
 
-    # 色の定義
-    WHITE = (255, 255, 255)
-    BLACK = (  0,   0,   0)
-    GREEN = (  0, 255,   0)    
-
     # シミュレータ状態の定義
     STATES = ('sinit','slocate','srotate','swait','srun','squit')
 
     # シミュレータ遷移の定義
     #
-    #               +-----------------------+
-    #               ↓                       |
+    #               +========================+
+    #               ↓|                      ↑|
     # (sinit) → (slocate) ⇔ (srotate) → (swait) ⇔ (srun)
-    #               |            |          |          |                                    
-    #               +------------+----+-----+----------+
+    #               |           |           |          |                                    
+    #               +-----------+-----+-----+----------+
     #                                 ↓
     #                              (squit) 
     #
@@ -215,9 +252,10 @@ class LFModelInTheLoopSimulation(object):
     #
     TRANSITIONS = (
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate'},
-        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate'},    
-        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait'  },        
-        {'trigger': 'reset',       'source': 'srotate', 'dest': 'slocate'},            
+        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate'},
+        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate'},
+        {'trigger': 'wait',        'source': 'slocate', 'dest': 'swait' },  
+        {'trigger': 'wait',        'source': 'srotate', 'dest': 'swait' },                
         {'trigger': 'reset',       'source': 'swait',   'dest': 'slocate'},                
         {'trigger': 'start',       'source': 'swait',   'dest': 'srun'   },
         {'trigger': 'stop',        'source': 'srun',    'dest': 'swait'  },
@@ -267,41 +305,63 @@ class LFModelInTheLoopSimulation(object):
             if self.state == 'sinit': 
                 # 初期化設定
                 flag_drag = False
+                flag_rot  = False
 
                 # 無条件で遷移
                 self.initialized()
 
+            msg = font.render('', True, GREEN) 
             if self.state == 'slocate': 
                 # 位置設定
                 mouseX, mouseY = pygame.mouse.get_pos()
-                txt1 = '{},{}'.format(mouseX, mouseY)
+                #txt1 = '{},{}'.format(mouseX, mouseY)
                 mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
-                txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
+                #txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
                 # マウスポインタが車体上かつ左クリックならば
                 # 車体をドラッグ
                 rect = self._linefollower.get_rect_px()
                 isMouseIn = rect[0] < mouseX and mouseX < rect[0]+rect[2] and \
                     rect[1] < mouseY and mouseY < rect[1]+rect[3]
-                if (isMouseIn or flag_drag) and mBtn1 == 1:
+                if (flag_drag or isMouseIn) and mBtn1 == 1:
                     if not flag_drag:
                         preX, preY = mouseX, mouseY
                         flag_drag = True
                     dx_px, dy_px = mouseX - preX, mouseY - preY
                     self._linefollower.move_px(dx_px,dy_px)                    
                     preX, preY = mouseX, mouseY
+                    #msg = font.render(txt1 +' '+ txt2, True, GREEN)
+                elif flag_drag and mBtn1 == 0: # 設定終了判定
+                    flag_drag = False
+                    self.located()
                 else:
                     flag_drag = False
-                    msg = font.render('Out of car', True, self.GREEN)
+                    #msg = font.render('Out of car', True, GREEN)
+     
+            if self.state == 'srotate': 
+                # 方向設定
+                mouseX, mouseY = pygame.mouse.get_pos()
+                txt1 = '{},{}'.format(mouseX, mouseY)
+                mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
+                txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
+                msg = font.render(txt1 +' '+ txt2 + str(flag_rot), True, GREEN)                
+                # 左クリックならば車体を回転
+                if mBtn1 == 1:
+                    if not flag_rot:
+                        center_px = self._linefollower.get_center_px()
+                        angle0 = self._linefollower.angle
+                        flag_rot = True
+                    dx_px = mouseX - center_px[0]
+                    dy_px = mouseY - center_px[1]
+                    angle = math.atan2(dy_px,dx_px)
+                    self._linefollower.rotate(angle0+angle)
+                elif flag_rot and mBtn1 == 0: # 設定終了判定
+                    flag_rot = False
+                    self.rotated()
+                else:
+                    flag_rot = False
 
-                msg = font.render(txt1 +' '+ txt2, True, self.GREEN)
-
-                # 設定終了判定
-                if key[pygame.K_l] == 1: # l 位置設定終了
-                    # 条件付き遷移
-                    self.located()
-
-            if key[pygame.K_r] == 1: # r 回転設定終了
-                self.rotated()                    
+            if key[pygame.K_w] == 1: 
+                self.wait()                                       
             if key[pygame.K_ESCAPE] == 1: # ESC 位置回転リセット
                 self.reset()                                       
             if key[pygame.K_s] == 1: # s スタート
@@ -311,9 +371,9 @@ class LFModelInTheLoopSimulation(object):
             if key[pygame.K_q] == 1: # q 終了
                 self.quit()                                                                                                
 
-            #self._screen.fill(self.WHITE)
+            #self._screen.fill(WHITE)
             self._linefollower.draw_body(self._screen)
-            sur = font.render(self.state, True, self.BLACK)
+            sur = font.render(self.state, True, BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
             self._screen.blit(msg,[20,self._height-40])          
 
