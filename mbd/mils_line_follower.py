@@ -182,6 +182,7 @@ class LFModelInTheLoopSimulation(object):
     # 色の定義
     WHITE = (255, 255, 255)
     BLACK = (  0,   0,   0)
+    GREEN = (  0, 255,   0)    
 
     # シミュレータ状態の定義
     STATES = ('sinit','slocate','srotate','swait','srun','squit')
@@ -250,11 +251,29 @@ class LFModelInTheLoopSimulation(object):
                     pygame.quit()
                     sys.exit()
 
+            # 背景描画
+            self._screen.blit(self._course.image,[0, 0])
+
             key = pygame.key.get_pressed()
-            if key[pygame.K_i] == 1: # i 初期化終了
+            if self.state == 'sinit': 
+                # 初期化設定
+
+                # 無条件で遷移
                 self.initialized()
-            if key[pygame.K_l] == 1: # l 位置設定終了
-                self.located()
+
+            if self.state == 'slocate': 
+                # 位置設定
+                mouseX, mouseY = pygame.mouse.get_pos()
+                txt1 = '{},{}'.format(mouseX, mouseY)
+                mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
+                txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
+                msg = font.render('Mouse Input '+txt1 +' '+ txt2, True, self.GREEN)
+
+                # 設定終了判定
+                if key[pygame.K_l] == 1: # l 位置設定終了
+                    # 条件付き遷移
+                    self.located()
+
             if key[pygame.K_r] == 1: # r 回転設定終了
                 self.rotated()                    
             if key[pygame.K_ESCAPE] == 1: # ESC 位置回転リセット
@@ -266,11 +285,11 @@ class LFModelInTheLoopSimulation(object):
             if key[pygame.K_q] == 1: # q 終了
                 self.quit()                                                                                                
 
-            self._screen.blit(self._course.image,[0, 0])
             #self._screen.fill(self.WHITE)
             self._linefollower.draw_body(self._screen)
             sur = font.render(self.state, True, self.BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
+            self._screen.blit(msg,[20,self._height-40])          
 
             pygame.display.update()
             self._clock.tick(self._fps)
