@@ -130,14 +130,10 @@ class LFPhysicalModel:
         self._interval = interval
 
     def draw_body(self,screen):
-        #pos = [int(self._x/res) , int(self._y/res)] # pixels
-        #rad = int(self.SHAFT_LENGTH/res)
-        #pygame.draw.circle(screen, BLUE, pos, rad)
-        #rect = self.get_rect_px()
-        #pygame.draw.rect(screen, BLUE, rect) 
+        #
         rect = np.asarray(self.get_rect_px())
         center = np.asarray(self.get_center_px())
-        #pygame.draw.rect(screen, BLUE, rect.tolist())
+        #
         apos00 = np.dot([[1,0,0,0],[0,1,0,0]],rect) - center
         apos10 = np.dot([[1,0,0,0],[0,1,0,1]],rect) - center
         apos01 = np.dot([[1,0,1,0],[0,1,0,0]],rect) - center
@@ -159,6 +155,8 @@ class LFPhysicalModel:
         pos11 = (apos11 + center).tolist()
         #
         pygame.draw.polygon(screen, BLUE, [pos00,pos10,pos01,pos11],0)
+
+        # TODO: 車体，フォトリフレクタ描画
 
     def get_rect_px(self):
         res = self._course.resolution # mm/pixel
@@ -237,9 +235,9 @@ class LFModelInTheLoopSimulation(object):
     #
     #               +========================+
     #               ↓|                      ↑|
-    # (sinit) → (slocate) ⇔ (srotate) → (swait) ⇔ (srun)
-    #               |           |           |          |                                    
-    #               +-----------+-----+-----+----------+
+    # (sinit) → (slocate) ⇔ (srotate) 　 (srun)
+    #               |           |           | 
+    #               +-----------+-----+-----+
     #                                 ↓
     #                              (squit) 
     #
@@ -251,14 +249,11 @@ class LFModelInTheLoopSimulation(object):
     # squit:   終了
     #
     TRANSITIONS = (
-        {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate'},
-        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate'},
-        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate'},
-        {'trigger': 'wait',        'source': 'slocate', 'dest': 'swait' },  
-        {'trigger': 'wait',        'source': 'srotate', 'dest': 'swait' },                
-        {'trigger': 'reset',       'source': 'swait',   'dest': 'slocate'},                
-        {'trigger': 'start',       'source': 'swait',   'dest': 'srun'   },
-        {'trigger': 'stop',        'source': 'srun',    'dest': 'swait'  },
+        {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
+        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate' },
+        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate' },
+        {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },        
+        {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate' },                
         {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit'  },
         {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit'  },
         {'trigger': 'quit',        'source': 'swait',   'dest': 'squit'  },
@@ -307,6 +302,8 @@ class LFModelInTheLoopSimulation(object):
                 flag_drag = False
                 flag_rot  = False
 
+                # スタート，ストップ，終了
+
                 # 無条件で遷移
                 self.initialized()
 
@@ -336,7 +333,7 @@ class LFModelInTheLoopSimulation(object):
                 else:
                     flag_drag = False
                     #msg = font.render('Out of car', True, GREEN)
-     
+
             if self.state == 'srotate': 
                 # 方向設定
                 mouseX, mouseY = pygame.mouse.get_pos()
@@ -360,14 +357,10 @@ class LFModelInTheLoopSimulation(object):
                 else:
                     flag_rot = False
 
-            if key[pygame.K_w] == 1: 
-                self.wait()                                       
-            if key[pygame.K_ESCAPE] == 1: # ESC 位置回転リセット
-                self.reset()                                       
-            if key[pygame.K_s] == 1: # s スタート
+            if key[pygame.K_ESCAPE] == 1: # ストップ
+                self.stop()                                       
+            if key[pygame.K_SPACE] == 1: # スタート
                 self.start()                                                                
-            if key[pygame.K_t] == 1: # t ストップ
-                self.stop()                                                                                
             if key[pygame.K_q] == 1: # q 終了
                 self.quit()                                                                                                
 
