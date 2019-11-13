@@ -104,9 +104,14 @@ class LFPhysicalModel:
     def course(self):
         return self._course        
 
-    def set_position(self,x,y):
+    def set_position_mm(self,x,y):
         self._x = x # mm
         self._y = y # mm
+
+    def move_px(self,dx_px,dy_px):
+        res = self._course.resolution # mm/pixel        
+        self._x = self._x + dx_px*res # mm
+        self._y = self._y + dy_px*res # mm        
 
     def set_angle(self,angle):
         self._angle = angle # rad
@@ -115,10 +120,14 @@ class LFPhysicalModel:
         self._interval = interval
 
     def draw_body(self,screen):
-        res = self._course.resolution # mm/pixel
         #pos = [int(self._x/res) , int(self._y/res)] # pixels
         #rad = int(self.SHAFT_LENGTH/res)
         #pygame.draw.circle(screen, self.BLUE, pos, rad)
+        rect = self.get_rect_px()
+        pygame.draw.rect(screen, self.BLUE, rect) 
+
+    def get_rect_px(self):
+        res = self._course.resolution # mm/pixel
         pos_cx_mm = self._x # pixel
         pos_cy_mm = self._y # pixel
         car_width_mm = 120 # 車体幅 in mm
@@ -127,8 +136,8 @@ class LFPhysicalModel:
         pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH)+10
         car_width_px = car_width_mm/res # 車体幅 in pixel  
         car_length_px = car_length_mm/res  # 車体長 in mm        
-        rect = [pos_topleft_x_px, pos_topleft_y_px, car_length_px, car_width_px] # pixels        
-        pygame.draw.rect(screen, self.BLUE, rect)        
+        rect = [pos_topleft_x_px,pos_topleft_y_px, car_length_px, car_width_px]
+        return rect
 
     def drive(self, left, right):
         pass
@@ -257,6 +266,7 @@ class LFModelInTheLoopSimulation(object):
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
                 # 初期化設定
+                flag_drag = False
 
                 # 無条件で遷移
                 self.initialized()
@@ -267,7 +277,23 @@ class LFModelInTheLoopSimulation(object):
                 txt1 = '{},{}'.format(mouseX, mouseY)
                 mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
                 txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
-                msg = font.render('Mouse Input '+txt1 +' '+ txt2, True, self.GREEN)
+                # マウスポインタが車体上かつ左クリックならば
+                # 車体をドラッグ
+                rect = self._linefollower.get_rect_px()
+                isMouseIn = rect[0] < mouseX and mouseX < rect[0]+rect[2] and \
+                    rect[1] < mouseY and mouseY < rect[1]+rect[3]
+                if (isMouseIn or flag_drag) and mBtn1 == 1:
+                    if not flag_drag:
+                        preX, preY = mouseX, mouseY
+                        flag_drag = True
+                    dx_px, dy_px = mouseX - preX, mouseY - preY
+                    self._linefollower.move_px(dx_px,dy_px)                    
+                    preX, preY = mouseX, mouseY
+                else:
+                    flag_drag = False
+                    msg = font.render('Out of car', True, self.GREEN)
+
+                msg = font.render(txt1 +' '+ txt2, True, self.GREEN)
 
                 # 設定終了判定
                 if key[pygame.K_l] == 1: # l 位置設定終了
