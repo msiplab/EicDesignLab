@@ -459,12 +459,11 @@ class LFModelInTheLoopSimulation(object):
                 if mBtn1 == 1:
                     if not self._flag_rot:
                         center_px = self._linefollower.get_center_px()
-                        angle0 = self._linefollower.angle
                         self._flag_rot = True
                     dx_px = mouseX - center_px[0]
                     dy_px = mouseY - center_px[1]
                     angle = math.atan2(dy_px,dx_px)
-                    self._linefollower.rotate(angle0+angle)
+                    self._linefollower.rotate(angle)
                 elif self._flag_rot and mBtn1 == 0: # 設定終了判定
                     self.rotated()
 
@@ -481,8 +480,6 @@ class LFModelInTheLoopSimulation(object):
                     self.stop()
                 else:
                     self._linefollower.drive(self._fps)
-
-
 
             # キーボード入力
             if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
