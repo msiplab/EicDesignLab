@@ -28,6 +28,8 @@
 
 準備
 
+ $ sudo apt-get install python3-numpy
+ $ sudo apt-get install  python3-scipy
  $ sudo apt-get install python3-pygame
  $ sudo apt-get install python3-transitions
 
@@ -355,11 +357,11 @@ class LFModelInTheLoopSimulation(object):
 
     # シミュレータ遷移の定義
     #
-    #               +=======================+
-    #               ↓|                    　↑|
-    # (sinit) → (slocate) ⇔ (srotate) → (srun)
-    #               |           |           | 
-    #               +-----------+-----+-----+
+    #               +-------------------------------+
+    #               ↓                           　  ↑
+    # (sinit) → (slocate) → (srotate) → (swait) → (srun)
+    #               |           |          |        |
+    #               +-----------+-----+----+--------+
     #                                 ↓
     #                              (squit) 
     #
@@ -373,14 +375,13 @@ class LFModelInTheLoopSimulation(object):
     TRANSITIONS = (
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
         {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },
-        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate', 'after': 'rflag_false' },
-        {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },
-        {'trigger': 'start',       'source': 'srotate', 'dest': 'srun' },                
+        {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait',   'after': 'rflag_false' },
+        {'trigger': 'start',       'source': 'swait',   'dest': 'srun' },
         {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': 'reset' },                
-        {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit', 'after': 'close'  },
-        {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit', 'after': 'close'  },
-        {'trigger': 'quit',        'source': 'swait',   'dest': 'squit', 'after': 'close'  },
-        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit', 'after': 'close'  }
+        {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit',   'after': 'close'  },
+        {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit',   'after': 'close'  },
+        {'trigger': 'quit',        'source': 'swait',   'dest': 'squit',   'after': 'close'  },
+        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit',   'after': 'close'  }
     )
 
     def __init__(self, linefollower, fps = 10):
@@ -406,12 +407,12 @@ class LFModelInTheLoopSimulation(object):
         self._flag_drag = False
         self._flag_rot  = False
 
-
     def run(self):
 
         pygame.init()
         pygame.display.set_caption('ライントレース・シミュレーター')
-        font = pygame.font.Font(None, 40)
+        font40 = pygame.font.Font(None, 40)
+        font20 = pygame.font.Font(None, 20)        
 
         while True:
             for event in pygame.event.get():
@@ -436,7 +437,7 @@ class LFModelInTheLoopSimulation(object):
                 # 無条件で遷移
                 self.initialized()
 
-            msg = font.render('', True, GREEN) 
+            msg = font20.render('', True, BLUE) 
             if self.state == 'slocate': 
                 # マウスポインタが車体上かつ左クリックならば
                 # 車体をドラッグ
@@ -450,7 +451,7 @@ class LFModelInTheLoopSimulation(object):
                     dx_px, dy_px = mouseX - preX, mouseY - preY
                     self._linefollower.move_px(dx_px,dy_px)                    
                     preX, preY = mouseX, mouseY
-                elif self._flag_drag and mBtn1 == 0: # 設定終了判定
+                elif self._flag_drag: # 設定終了判定
                     self.located()
 
             if self.state == 'srotate': 
@@ -467,8 +468,21 @@ class LFModelInTheLoopSimulation(object):
                 elif self._flag_rot and mBtn1 == 0: # 設定終了判定
                     self.rotated()
 
+            if self.state == 'swait':
+                if mBtn1 == 1:
+                    if not self._flag_drag:
+                        self._flag_drag = True
+                elif self._flag_drag:
+                    self._flag_drag = False
+                    self.start()
+
             if self.state == 'srun':
-                self._linefollower.drive(self._fps)
+                if mBtn1 == 1:
+                    self.stop()
+                else:
+                    self._linefollower.drive(self._fps)
+
+
 
             # キーボード入力
             if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
@@ -480,9 +494,9 @@ class LFModelInTheLoopSimulation(object):
 
             # 画面描画
             self._linefollower.draw_body(self._screen)
-            sur = font.render(self.state, True, BLACK)
+            sur = font40.render(self.state, True, BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
-            self._screen.blit(msg,[20,self._height-40])          
+            self._screen.blit(msg,[10,self._height-20])          
             pygame.display.update()
 
             # クロック
