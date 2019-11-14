@@ -48,10 +48,16 @@ BLUE  = (  0,   0, 255)
 # コースデータ画像
 COURSE_IMG = 'lfcourse.png'
 
+# フォトリフレクタ数
+NUM_PHOTOREFS = 4
+
 # メイン関数
 def main():
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG)
+
+    # 制御モデルのインスタンス生成
+    controller = LFController()
 
     # シャフト中心(+)からのフォトリフレクタ(*)の
     # 相対座標[mm]
@@ -64,13 +70,16 @@ def main():
     #
     # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4))
     mpp = ((120,-40), (110,-20), (110,20), (120,40))
-    lf = LFPhysicalModel(course, weight = 200, mntposprs = mpp)
+    lf = LFPhysicalModel(course, controller, weight = 200, mntposprs = mpp)
 
     # MILSオブジェクトのインスタンス生成
     mils = LFModelInTheLoopSimulation(lf)
 
     # シミュレーションの実行
     mils.run()
+
+def clamped(v):
+    return max(-1,min(1,v))
 
 class LFController:
     """ ライントレース制御クラス 
@@ -80,7 +89,48 @@ class LFController:
         入力　フォトリフレクの値 [0,1]x4
         出力　モーター制御信号 [-1,1]x2
     """
-    pass
+    
+    def __init__(self,prs = None):
+        self._prs = prs
+
+    def prs2mtrs(self):
+        """ フォトリフレクタ→モータ制御 """
+
+        # フォトリフレクタの値を読み出しとベクトル化
+        vec_x = np.array([ self._prs[idx].value \
+            for idx in range(NUM_PHOTOREFS) ])
+
+        # モーター制御の強度値を計算（ここを工夫）
+        mat_A = np.array([[0.4, 0.3, 0.2, 0.1],\
+            [0.1, 0.2, 0.3, 0.4]])
+        vec_y = np.dot(mat_A,vec_x)
+
+        # 出力範囲を[-1,1]に直して出力
+        left, right = vec_y[0], vec_y[1]
+
+        return (clamped(left),clamped(right))
+
+    @property
+    def photorefs(self):
+        return self._prs
+
+    @photorefs.setter
+    def photorefs(self,prs):
+        self._prs = prs
+
+class LFPhotoReflector:
+    """ フォトリフレクタクラス """
+
+    def __init__(self,value = 0.0):
+        self._value = value
+    
+    @property
+    def value(self):
+        return self._value
+    
+    @value.setter
+    def value(self,value):
+        self._value = value
 
 class LFPhysicalModel:
     """ ライントレーサー物理モデルクラス 
@@ -96,15 +146,25 @@ class LFPhysicalModel:
 
     def __init__(self, \
         course, \
+        controller, \
         weight = 200, \
         mntposprs =  ((120,-40), (110,-20), (110,20), (120,40)) \
         ):
+
+        self._course = course
+        self._controller = controller
         self._weight = weight
         self._mntposprs = mntposprs
-        self._course = course
-        self._x = self.SHAFT_LENGTH + 10 # mm
-        self._y = self.SHAFT_LENGTH + 10 # mm
+        self._x_mm = self.SHAFT_LENGTH + 10 # mm
+        self._y_mm = self.SHAFT_LENGTH + 10 # mm
         self._angle = 0 # rad
+
+        # 制御機へのフォトリフレクタ設定
+        self._prs = [ LFPhotoReflector() \
+            for idx in range(NUM_PHOTOREFS)]
+        for idx in range(NUM_PHOTOREFS):
+            self._prs[idx].value = 0.0
+        self._controller.photorefs = self._prs
 
     @property
     def course(self):
@@ -115,13 +175,13 @@ class LFPhysicalModel:
         return self._angle
 
     def set_position_mm(self,x,y):
-        self._x = x # mm
-        self._y = y # mm
+        self._x_mm = x # mm
+        self._y_mm = y # mm
 
     def move_px(self,dx_px,dy_px):
         res = self._course.resolution # mm/pixel        
-        self._x = self._x + dx_px*res # mm
-        self._y = self._y + dy_px*res # mm   
+        self._x_mm = self._x_mm + dx_px*res # mm
+        self._y_mm = self._y_mm + dy_px*res # mm   
 
     def rotate(self,angle):
         self._angle = angle # rad
@@ -160,8 +220,8 @@ class LFPhysicalModel:
 
     def get_rect_px(self):
         res = self._course.resolution # mm/pixel
-        pos_cx_mm = self._x # pixel
-        pos_cy_mm = self._y # pixel
+        pos_cx_mm = self._x_mm # pixel
+        pos_cy_mm = self._y_mm # pixel
         car_width_mm = 120 # 車体幅 in mm
         car_length_mm = 160 # 車体長 in mm
         pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH)+10
@@ -173,13 +233,15 @@ class LFPhysicalModel:
 
     def get_center_px(self):
         res = self._course.resolution # mm/pixel        
-        cx_mm = self._x # pixel
-        cy_mm = self._y # pixel
+        cx_mm = self._x_mm # pixel
+        cy_mm = self._y_mm # pixel
         cx_px = cx_mm/res
         cy_px = cy_mm/res
         return [cx_px,cy_px]
 
-    def drive(self, left, right):
+    def drive(self):
+        left, right = 0, 0
+        self._x_mm = self._x
         pass
 
     def sense(self):
@@ -233,9 +295,9 @@ class LFModelInTheLoopSimulation(object):
 
     # シミュレータ遷移の定義
     #
-    #               +========================+
-    #               ↓|                      ↑|
-    # (sinit) → (slocate) ⇔ (srotate) 　 (srun)
+    #               +=======================+
+    #               ↓|                    　↑|
+    # (sinit) → (slocate) ⇔ (srotate) → (srun)
     #               |           |           | 
     #               +-----------+-----+-----+
     #                                 ↓
@@ -252,12 +314,13 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
         {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },
         {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate', 'after': 'rflag_false' },
-        {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },        
+        {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },
+        {'trigger': 'start',       'source': 'srotate', 'dest': 'srun' },                
         {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate' },                
-        {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit'  },
-        {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit'  },
-        {'trigger': 'quit',        'source': 'swait',   'dest': 'squit'  },
-        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit'  }            
+        {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit', 'after': 'close'  },
+        {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit', 'after': 'close'  },
+        {'trigger': 'quit',        'source': 'swait',   'dest': 'squit', 'after': 'close'  },
+        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit', 'after': 'close'  }
     )
 
     def __init__(self, linefollower, fps = 10):
@@ -293,11 +356,16 @@ class LFModelInTheLoopSimulation(object):
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    self.quit()
 
             # 背景描画
             self._screen.blit(self._course.image,[0, 0])
+
+            # 位置設定
+            mouseX, mouseY = pygame.mouse.get_pos()
+            #txt1 = '{},{}'.format(mouseX, mouseY)
+            mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
+            #txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
 
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
@@ -310,11 +378,6 @@ class LFModelInTheLoopSimulation(object):
 
             msg = font.render('', True, GREEN) 
             if self.state == 'slocate': 
-                # 位置設定
-                mouseX, mouseY = pygame.mouse.get_pos()
-                #txt1 = '{},{}'.format(mouseX, mouseY)
-                mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
-                #txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
                 # マウスポインタが車体上かつ左クリックならば
                 # 車体をドラッグ
                 rect = self._linefollower.get_rect_px()
@@ -327,17 +390,10 @@ class LFModelInTheLoopSimulation(object):
                     dx_px, dy_px = mouseX - preX, mouseY - preY
                     self._linefollower.move_px(dx_px,dy_px)                    
                     preX, preY = mouseX, mouseY
-                    #msg = font.render(txt1 +' '+ txt2, True, GREEN)
                 elif self._flag_drag and mBtn1 == 0: # 設定終了判定
                     self.located()
 
             if self.state == 'srotate': 
-                # 方向設定
-                mouseX, mouseY = pygame.mouse.get_pos()
-                txt1 = '{},{}'.format(mouseX, mouseY)
-                mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
-                txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
-                msg = font.render(txt1 +' '+ txt2 + str(self._flag_rot), True, GREEN)                
                 # 左クリックならば車体を回転
                 if mBtn1 == 1:
                     if not self._flag_rot:
@@ -351,20 +407,25 @@ class LFModelInTheLoopSimulation(object):
                 elif self._flag_rot and mBtn1 == 0: # 設定終了判定
                     self.rotated()
 
-            if key[pygame.K_ESCAPE] == 1: # ストップ
+            if self.state == 'srun':
+                self._linefollower.drive()
+
+            # キーボード入力
+            if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
                 self.stop()                                       
-            if key[pygame.K_SPACE] == 1: # スタート
+            if key[pygame.K_SPACE] == 1: # [SPACE] スタート
                 self.start()                                                                
-            if key[pygame.K_q] == 1: # q 終了
+            if key[pygame.K_q] == 1: # [q] 終了
                 self.quit()                                                                                                
 
-            #self._screen.fill(WHITE)
+            # 画面描画
             self._linefollower.draw_body(self._screen)
             sur = font.render(self.state, True, BLACK)
             self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
             self._screen.blit(msg,[20,self._height-40])          
-
             pygame.display.update()
+
+            # クロック
             self._clock.tick(self._fps)
 
     def lflag_false(self):
@@ -372,6 +433,10 @@ class LFModelInTheLoopSimulation(object):
 
     def rflag_false(self):
         self._flag_rot = False    
+
+    def close(self):
+        pygame.quit()
+        sys.exit()
 
 if __name__ == '__main__':
     main()
