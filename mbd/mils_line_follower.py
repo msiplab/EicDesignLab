@@ -105,7 +105,7 @@ class LFController:
 
         # 出力範囲を[-1,1]に直して出力
         #left, right = vec_y[0], vec_y[1]
-        left, right = 1.0, 1.0
+        left, right = 0.8, 0.2
 
         return (clamped(left),clamped(right))
 
@@ -246,9 +246,10 @@ class LFPhysicalModel:
     def drive(self,fps):
         # モデルパラメータ
         sFwd = 1.0
-        sRot = 1.0 
-        kFwd = 1.0 # 抵抗係数
+        sRot = 3.0
+        kFwd = 3.0 # 抵抗係数
         kRot = 1.0 # 抵抗係数
+        weight_kg = 1e-3*self._weight
         # センサ値更新 
         self._sense()
         # モーター制御信号取得
@@ -262,8 +263,8 @@ class LFPhysicalModel:
             [ np.cos(angle), -np.sin(angle) ],
             [ np.sin(angle),  np.cos(angle) ]
         ])
-        accelFwd = sFwd*forceFwd*rotate.dot([1.0,0.0])/self._weight
-        accelRot = sRot*forceRot/self._weight
+        accelFwd = sFwd*forceFwd*rotate.dot([1.0,0.0])/weight_kg
+        accelRot = sRot*forceRot/weight_kg
         # 運動方程式
         #
         # d^2p/dt^2 = -k/m dp/dt + a(t)
@@ -279,7 +280,7 @@ class LFPhysicalModel:
         pos[2] = 1e-3*self._vx_mm # m
         pos[3] = 1e-3*self._vy_mm # m
         t = np.linspace(0,1/fps,2)
-        y = odeint(self._f,pos,t,args=(-kFwd/self._weight,accelFwd))
+        y = odeint(self._f,pos,t,args=(-kFwd/weight_kg,accelFwd))
         pos = y[-1]
         self._x_mm  = 1e3*pos[0]
         self._y_mm  = 1e3*pos[1]
@@ -289,7 +290,7 @@ class LFPhysicalModel:
         ang = [0.0, 0.0]
         ang[0] = self._angle
         ang[1] = self._w
-        z = odeint(self._g,ang,t,args=(-kRot/self._weight,accelRot))
+        z = odeint(self._g,ang,t,args=(-kRot/weight_kg,accelRot))
         ang = z[-1]
         self._angle = ang[0]
         self._w     = ang[1]        
