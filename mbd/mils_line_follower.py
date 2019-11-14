@@ -34,6 +34,7 @@
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 """
 from transitions import Machine
+from scipy.integrate import odeint
 import numpy as np
 import pygame
 import sys
@@ -56,9 +57,6 @@ def main():
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG)
 
-    # 制御モデルのインスタンス生成
-    controller = LFController()
-
     # シャフト中心(+)からのフォトリフレクタ(*)の
     # 相対座標[mm]
     #  
@@ -70,7 +68,7 @@ def main():
     #
     # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4))
     mpp = ((120,-40), (110,-20), (110,20), (120,40))
-    lf = LFPhysicalModel(course, controller, weight = 200, mntposprs = mpp)
+    lf = LFPhysicalModel(course, weight = 200, mntposprs = mpp)
 
     # MILSオブジェクトのインスタンス生成
     mils = LFModelInTheLoopSimulation(lf)
@@ -101,12 +99,13 @@ class LFController:
             for idx in range(NUM_PHOTOREFS) ])
 
         # モーター制御の強度値を計算（ここを工夫）
-        mat_A = np.array([[0.4, 0.3, 0.2, 0.1],\
-            [0.1, 0.2, 0.3, 0.4]])
-        vec_y = np.dot(mat_A,vec_x)
+        #mat_A = np.array([[0.4, 0.3, 0.2, 0.1],\
+        #    [0.1, 0.2, 0.3, 0.4]])
+        #vec_y = np.dot(mat_A,vec_x)
 
         # 出力範囲を[-1,1]に直して出力
-        left, right = vec_y[0], vec_y[1]
+        #left, right = vec_y[0], vec_y[1]
+        left, right = 1.0, 1.0
 
         return (clamped(left),clamped(right))
 
@@ -146,20 +145,20 @@ class LFPhysicalModel:
 
     def __init__(self, \
         course, \
-        controller, \
         weight = 200, \
         mntposprs =  ((120,-40), (110,-20), (110,20), (120,40)) \
         ):
 
         self._course = course
-        self._controller = controller
         self._weight = weight
         self._mntposprs = mntposprs
         self._x_mm = self.SHAFT_LENGTH + 10 # mm
         self._y_mm = self.SHAFT_LENGTH + 10 # mm
-        self._angle = 0 # rad
+        self._angle = 0.0 # rad
+        self.reset()
 
-        # 制御機へのフォトリフレクタ設定
+        # 制御機とフォトリフレクタ設定
+        self._controller = LFController()
         self._prs = [ LFPhotoReflector() \
             for idx in range(NUM_PHOTOREFS)]
         for idx in range(NUM_PHOTOREFS):
@@ -173,6 +172,11 @@ class LFPhysicalModel:
     @property
     def angle(self):
         return self._angle
+
+    def reset(self):
+        self._vx_mm = 0.0 # mm
+        self._vy_mm = 0.0 # mm
+        self._w = 0.0
 
     def set_position_mm(self,x,y):
         self._x_mm = x # mm
@@ -239,13 +243,68 @@ class LFPhysicalModel:
         cy_px = cy_mm/res
         return [cx_px,cy_px]
 
-    def drive(self):
-        left, right = 0, 0
-        self._x_mm = self._x
-        pass
+    def drive(self,fps):
+        # モデルパラメータ
+        sFwd = 1.0
+        sRot = 1.0 
+        kFwd = 1.0 # 抵抗係数
+        kRot = 1.0 # 抵抗係数
+        # センサ値更新 
+        self._sense()
+        # モーター制御信号取得
+        mtrs = np.asarray(self._controller.prs2mtrs())
+        # 力の計算
+        forceFwd = mtrs[0]+mtrs[1]
+        forceRot = mtrs[0]-mtrs[1]    
+        # 加速度の計算
+        angle = self._angle # 車体の方向
+        rotate = np.asarray([
+            [ np.cos(angle), -np.sin(angle) ],
+            [ np.sin(angle),  np.cos(angle) ]
+        ])
+        accelFwd = sFwd*forceFwd*rotate.dot([1.0,0.0])/self._weight
+        accelRot = sRot*forceRot/self._weight
+        # 運動方程式
+        #
+        # d^2p/dt^2 = -k/m dp/dt + a(t)
+        #
+        # d_ (  p ) =  ( 0     1  )( p ) + ( 0 )
+        # dt (  p')    ( 0   -k/m )( p')   ( a )
+        #
+        # p = ( x )
+        #     ( y )
+        pos = [ 0.0 for idx in range(4) ]
+        pos[0] = 1e-3*self._x_mm # m
+        pos[1] = 1e-3*self._y_mm # m
+        pos[2] = 1e-3*self._vx_mm # m
+        pos[3] = 1e-3*self._vy_mm # m
+        t = np.linspace(0,1/fps,2)
+        y = odeint(self._f,pos,t,args=(-kFwd/self._weight,accelFwd))
+        pos = y[-1]
+        self._x_mm  = 1e3*pos[0]
+        self._y_mm  = 1e3*pos[1]
+        self._vx_mm = 1e3*pos[2]
+        self._vy_mm = 1e3*pos[3]
+        #
+        ang = [0.0, 0.0]
+        ang[0] = self._angle
+        ang[1] = self._w
+        z = odeint(self._g,ang,t,args=(-kRot/self._weight,accelRot))
+        ang = z[-1]
+        self._angle = ang[0]
+        self._w     = ang[1]        
 
-    def sense(self):
-        return []
+    def _f(self,p,t,c,a):
+        return [ p[2], p[3], c*p[2]+a[0], c*p[3]+a[1] ]
+
+    def _g(self,w,t,c,a):
+        return [ w[1], c*w[1]+a ]
+
+    def _sense(self):
+        self._prs[0].value = 0.0
+        self._prs[1].value = 0.0
+        self._prs[2].value = 0.0
+        self._prs[3].value = 0.0
 
 class LFCourse:
     """ コースデータ 
@@ -316,7 +375,7 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'rotated',     'source': 'srotate', 'dest': 'slocate', 'after': 'rflag_false' },
         {'trigger': 'start',       'source': 'slocate', 'dest': 'srun' },
         {'trigger': 'start',       'source': 'srotate', 'dest': 'srun' },                
-        {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate' },                
+        {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': 'reset' },                
         {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit', 'after': 'close'  },
         {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit', 'after': 'close'  },
         {'trigger': 'quit',        'source': 'swait',   'dest': 'squit', 'after': 'close'  },
@@ -408,7 +467,7 @@ class LFModelInTheLoopSimulation(object):
                     self.rotated()
 
             if self.state == 'srun':
-                self._linefollower.drive()
+                self._linefollower.drive(self._fps)
 
             # キーボード入力
             if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
@@ -433,6 +492,9 @@ class LFModelInTheLoopSimulation(object):
 
     def rflag_false(self):
         self._flag_rot = False    
+
+    def reset(self):
+        self._linefollower.reset()
 
     def close(self):
         pygame.quit()
