@@ -81,6 +81,13 @@ def main():
 def clamped(v):
     return max(-1,min(1,v))
 
+def rotate_pos(pos,center,angle):
+    rotmtx = np.asarray([
+        [ np.cos(angle), -np.sin(angle) ],
+        [ np.sin(angle),  np.cos(angle) ]
+    ])
+    return rotmtx.dot(pos-center) + center
+
 class LFController:
     """ ライントレース制御クラス 
         
@@ -122,16 +129,27 @@ class LFController:
 class LFPhotoReflector:
     """ フォトリフレクタクラス """
 
-    def __init__(self,value = 0.0):
+    def __init__(self,course,value = 0.0):
+        self._course = course
         self._value = value
     
     @property
     def value(self):
-        return self._value
+        return self.measurement()
     
     @value.setter
     def value(self,value):
         self._value = value
+
+    def set_position(self,pos_px):
+        # TODO センサ位置の設定
+
+        pass
+
+    def measurement(self):
+        pxarray = pygame.PixelArray(self._course.image)   
+        # TODO センサ位置周辺の値をリターン
+        return self._value
 
 class LFPhysicalModel:
     """ ライントレーサー物理モデルクラス 
@@ -161,7 +179,7 @@ class LFPhysicalModel:
 
         # 制御機とフォトリフレクタ設定
         self._controller = LFController()
-        self._prs = [ LFPhotoReflector() \
+        self._prs = [ LFPhotoReflector(self._course) \
             for idx in range(NUM_PHOTOREFS)]
         for idx in range(NUM_PHOTOREFS):
             self._prs[idx].value = 0.0
@@ -200,25 +218,21 @@ class LFPhysicalModel:
         rect = np.asarray(self.get_rect_px())
         center = np.asarray(self.get_center_px())
         #
-        apos00 = np.dot([[1,0,0,0],[0,1,0,0]],rect) - center
-        apos10 = np.dot([[1,0,0,0],[0,1,0,1]],rect) - center
-        apos01 = np.dot([[1,0,1,0],[0,1,0,0]],rect) - center
-        apos11 = np.dot([[1,0,1,0],[0,1,0,1]],rect) - center
+        apos00 = np.dot([[1,0,0,0],[0,1,0,0]],rect)
+        apos10 = np.dot([[1,0,0,0],[0,1,0,1]],rect)
+        apos01 = np.dot([[1,0,1,0],[0,1,0,0]],rect)
+        apos11 = np.dot([[1,0,1,0],[0,1,0,1]],rect)
         #
         angle = self._angle
-        rotate = np.asarray([
-            [ np.cos(angle), -np.sin(angle) ],
-            [ np.sin(angle),  np.cos(angle) ]
-        ])
-        apos00 = rotate.dot(apos00)
-        apos10 = rotate.dot(apos10)
-        apos01 = rotate.dot(apos01)
-        apos11 = rotate.dot(apos11)
+        apos00 = rotate_pos(apos00,center,angle)
+        apos10 = rotate_pos(apos10,center,angle)
+        apos01 = rotate_pos(apos01,center,angle)
+        apos11 = rotate_pos(apos11,center,angle)
         #
-        pos00 = (apos00 + center).tolist()
-        pos10 = (apos10 + center).tolist()
-        pos01 = (apos01 + center).tolist()
-        pos11 = (apos11 + center).tolist()
+        pos00 = apos00.tolist()
+        pos10 = apos10.tolist()
+        pos01 = apos01.tolist()
+        pos11 = apos11.tolist()
         #
         pygame.draw.polygon(screen, BLUE, [pos00,pos10,pos01,pos11],0)
 
@@ -261,11 +275,8 @@ class LFPhysicalModel:
         forceRot = mtrs[0]-mtrs[1]    
         # 加速度の計算
         angle = self._angle # 車体の方向
-        rotate = np.asarray([
-            [ np.cos(angle), -np.sin(angle) ],
-            [ np.sin(angle),  np.cos(angle) ]
-        ])
-        accelFwd = sFwd*forceFwd*rotate.dot([1.0,0.0])/weight_kg
+        direction  = np.asarray([ np.cos(angle), np.sin(angle)]) 
+        accelFwd = sFwd*forceFwd*direction/weight_kg
         accelRot = sRot*forceRot/weight_kg
         # 運動方程式
         #
@@ -304,10 +315,18 @@ class LFPhysicalModel:
         return [ w[1], c*w[1]+a ]
 
     def _sense(self):
-        self._prs[0].value = 0.0
-        self._prs[1].value = 0.0
-        self._prs[2].value = 0.0
-        self._prs[3].value = 0.0
+        # 車体の位置と向き
+        center_px = self.get_center_px()
+        angle = self._angle
+
+        # フォトリフレクタ位置を計算
+        # TODO
+
+        # フォトリフレクタの位置を設定
+        self._prs[0].set_position(center_px)        
+        self._prs[1].set_position(center_px)
+        self._prs[2].set_position(center_px)
+        self._prs[3].set_position(center_px)
 
 class LFCourse:
     """ コースデータ 
@@ -424,17 +443,13 @@ class LFModelInTheLoopSimulation(object):
 
             # 位置設定
             mouseX, mouseY = pygame.mouse.get_pos()
-            #txt1 = '{},{}'.format(mouseX, mouseY)
             mBtn1, mBtn2, mBtn3 = pygame.mouse.get_pressed()
+            #txt1 = '{},{}'.format(mouseX, mouseY)
             #txt2 = '{}:{}:{}'.format(mBtn1,mBtn2,mBtn3)
 
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
                 # 初期化設定
-
-                # スタート，ストップ，終了
-
-                # 無条件で遷移
                 self.initialized()
 
             msg = font20.render('', True, BLUE) 
