@@ -6,8 +6,10 @@
 説明
 
 　コースデータは画像(PNGやJPG)として準備してください。
-　制御アルゴリズムの変更についてはLFController クラスを編集してください。
-　物理モデルの変更についてはLFPhysicalModel クラスを編集してください。
+　制御アルゴリズムの変更についてはLFController クラスの
+　prs2mtrs メソッドを編集してください。
+　物理モデルの変更についてはLFPhysicalModel クラスの
+  drive メソッドを編集してください。
 
 プロパティ
 
@@ -132,6 +134,7 @@ class LFPhotoReflector:
     def __init__(self,course,value = 0.0):
         self._course = course
         self._value = value
+        self._pos_px = [0.0, 0.0]
     
     @property
     def value(self):
@@ -141,15 +144,31 @@ class LFPhotoReflector:
     def value(self,value):
         self._value = value
 
-    def set_position(self,pos_px):
-        # TODO センサ位置の設定
+    @property
+    def pos_px(self):
+        return self._pos_px
 
-        pass
+    @pos_px.setter
+    def pos_px(self,pos_px):
+        self._pos_px = pos_px
 
     def measurement(self):
-        pxarray = pygame.PixelArray(self._course.image)   
-        # TODO センサ位置周辺の値をリターン
-        return self._value
+        # センサ位置周辺の値をリターン
+        x_px = int(self._pos_px[0]+0.5)
+        y_px = int(self._pos_px[1]+0.5)     
+        if 1 < y_px and y_px < self._course.height-1 and \
+            1 < x_px and x_px < self._course.width-1:
+            pxarray = pygame.PixelArray(self._course.image) 
+            acc = 0.0
+            # 3x3 領域の平均を出力
+            for row in range(-1,2):
+                for col in range(-1,2):
+                    acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
+            value = acc/9.0
+        else:
+            value = 0.5
+
+        return value
 
 class LFPhysicalModel:
     """ ライントレーサー物理モデルクラス 
@@ -236,16 +255,24 @@ class LFPhysicalModel:
         #
         pygame.draw.polygon(screen, BLUE, [pos00,pos10,pos01,pos11],0)
 
-        # TODO: 車体，フォトリフレクタ描画
+        # TODO: 車体描画
+
+        # フォトリフレクタ描画
+        res = self._course.resolution # mm/pixel
+        for idx in range(NUM_PHOTOREFS):
+            pos = center + np.asarray(self._mntposprs[idx])/res
+            pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
+            red = (int(self._prs[idx].value*255.0), 0, 0)
+            pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):
         res = self._course.resolution # mm/pixel
         pos_cx_mm = self._x_mm # pixel
         pos_cy_mm = self._y_mm # pixel
-        car_width_mm = 120 # 車体幅 in mm
+        car_width_mm = 100 # 車体幅 in mm
         car_length_mm = 160 # 車体長 in mm
-        pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH)+10
-        pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH)+10
+        pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH+.5)+10
+        pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH+.5)+10
         car_width_px = car_width_mm/res # 車体幅 in pixel  
         car_length_px = car_length_mm/res  # 車体長 in mm        
         rect = [pos_topleft_x_px,pos_topleft_y_px, car_length_px, car_width_px]
@@ -315,18 +342,16 @@ class LFPhysicalModel:
         return [ w[1], c*w[1]+a ]
 
     def _sense(self):
+        # 解像度
+        res = self._course.resolution # mm/pixel                
         # 車体の位置と向き
         center_px = self.get_center_px()
         angle = self._angle
 
-        # フォトリフレクタ位置を計算
-        # TODO
-
-        # フォトリフレクタの位置を設定
-        self._prs[0].set_position(center_px)        
-        self._prs[1].set_position(center_px)
-        self._prs[2].set_position(center_px)
-        self._prs[3].set_position(center_px)
+        # フォトリフレクタ位置を設定
+        for idx in range(NUM_PHOTOREFS):
+            pos = center_px + np.asarray(self._mntposprs[idx])/res
+            self._prs[idx].pos_px = rotate_pos(pos,center_px,angle)        
 
 class LFCourse:
     """ コースデータ 
