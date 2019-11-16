@@ -2,14 +2,18 @@
 # coding: UTF-8
 """
 ライントレース Model In the Loop Simulation (MILS)
+（α版）
 
 説明
 
 　コースデータは画像(PNGやJPG)として準備してください。
+  プログラムと同じフォルダに置くかフォルダを指定してください。
+
 　制御アルゴリズムの変更についてはLFController クラスの
-　prs2mtrs メソッドを編集してください。
+　prs2mtrs() メソッドを編集してください。
+　
 　物理モデルの変更についてはLFPhysicalModel クラスの
-  drive メソッドを編集してください。
+  drive() メソッドを編集してください。
 
 プロパティ
 
@@ -28,7 +32,7 @@
 - フォトリフレクタへの白黒情報を提供
 - ライントレーサー位置情報の取得
 
-準備
+準備 (Raspbian の場合)
 
  $ sudo apt-get install python3-numpy
  $ sudo apt-get install  python3-scipy
@@ -36,6 +40,8 @@
  $ sudo apt-get install python3-transitions
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
+
+All rights revserved (c) Shogo MURAMATSU
 """
 from transitions import Machine
 from scipy.integrate import odeint
@@ -58,6 +64,8 @@ NUM_PHOTOREFS = 4
 
 # メイン関数
 def main():
+    """ メイン関数 """
+
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG)
 
@@ -81,9 +89,11 @@ def main():
     mils.run()
 
 def clamped(v):
+    """ 値の制限 [-1,1] """
     return max(-1,min(1,v))
 
 def rotate_pos(pos,center,angle):
+    """ 座標位置の回転 """
     rotmtx = np.asarray([
         [ np.cos(angle), -np.sin(angle) ],
         [ np.sin(angle),  np.cos(angle) ]
@@ -105,19 +115,18 @@ class LFController:
     def prs2mtrs(self):
         """ フォトリフレクタ→モータ制御 """
 
-        # フォトリフレクタの値を読み出しとベクトル化
+        # フォトリフレクタの値を読み出しとベクトル化(vec_x)
+        # 白を検出すると 0，黒を検出すると 1
         vec_x = np.array([ self._prs[idx].value \
             for idx in range(NUM_PHOTOREFS) ])
 
         # モーター制御の強度値を計算（ここを工夫）
-        #mat_A = np.array([[0.4, 0.3, 0.2, 0.1],\
-        #    [0.1, 0.2, 0.3, 0.4]])
-        #vec_y = np.dot(mat_A,vec_x)
+        mat_A = np.array([[-0.2, 0.0, 0.2, 0.4],\
+            [0.4, 0.2, 0.0, -0.2]])
+        vec_y = np.dot(mat_A,vec_x)
 
         # 出力範囲を[-1,1]に直して出力
-        #left, right = vec_y[0], vec_y[1]
-        left, right = 0.8, 0.2
-
+        left, right = vec_y[0], vec_y[1]
         return (clamped(left),clamped(right))
 
     @property
@@ -159,12 +168,12 @@ class LFPhotoReflector:
         if 1 < y_px and y_px < self._course.height-1 and \
             1 < x_px and x_px < self._course.width-1:
             pxarray = pygame.PixelArray(self._course.image) 
-            acc = 0.0
             # 3x3 領域の平均を出力
+            acc = 0.0
             for row in range(-1,2):
                 for col in range(-1,2):
                     acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
-            value = acc/9.0
+            value = acc/9.0 # 平均値併産
         else:
             value = 0.5
 
@@ -269,8 +278,8 @@ class LFPhysicalModel:
         res = self._course.resolution # mm/pixel
         pos_cx_mm = self._x_mm # pixel
         pos_cy_mm = self._y_mm # pixel
-        car_width_mm = 100 # 車体幅 in mm
-        car_length_mm = 160 # 車体長 in mm
+        car_width_mm = 2*self.SHAFT_LENGTH # 車体幅 in mm
+        car_length_mm = car_width_mm+60 # 車体長 in mm
         pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH+.5)+10
         pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH+.5)+10
         car_width_px = car_width_mm/res # 車体幅 in pixel  
@@ -418,7 +427,7 @@ class LFModelInTheLoopSimulation(object):
     #
     TRANSITIONS = (
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
-        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },
+        {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },        
         {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait',   'after': 'rflag_false' },
         {'trigger': 'start',       'source': 'swait',   'dest': 'srun' },
         {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': 'reset' },                
@@ -475,6 +484,7 @@ class LFModelInTheLoopSimulation(object):
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
                 # 初期化設定
+                self._linefollower.set_position_mm(60,60) # mm
                 self.initialized()
 
             msg = font20.render('', True, BLUE) 
@@ -523,7 +533,7 @@ class LFModelInTheLoopSimulation(object):
 
             # キーボード入力
             if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
-                self.stop()                                       
+                self.stop()
             if key[pygame.K_SPACE] == 1: # [SPACE] スタート
                 self.start()                                                                
             if key[pygame.K_q] == 1: # [q] 終了
