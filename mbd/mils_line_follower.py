@@ -51,10 +51,11 @@ import sys
 import math
 
 # 色の定義
-WHITE = (255, 255, 255)
-BLACK = (  0,   0,   0)
-GREEN = (  0, 255,   0)    
-BLUE  = (  0,   0, 255)
+WHITE  = (255, 255, 255)
+BLACK  = (  0,   0,   0)
+GREEN  = (  0, 255,   0)    
+BLUE   = (  0,   0, 255)
+YELLOW = (  255, 128, 0)
 
 # コースデータ画像
 COURSE_IMG = 'lfcourse.png'
@@ -79,8 +80,13 @@ def main():
     #   y   --|--          * pr4 (dx4,dy4)
     #
     # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4))
-    mpp = ((120,-40), (110,-20), (110,20), (120,40))
-    lf = LFPhysicalModel(course, weight = 200, mntposprs = mpp)
+    lf_mount_pos_prf = ((120,-40), (110,-20), (110,20), (120,40))
+
+    # 車体の重さ (g)
+    lf_weight = 200
+    lf = LFPhysicalModel(course, \
+        weight = lf_weight, \
+        mntposprs = lf_mount_pos_prf)
 
     # MILSオブジェクトのインスタンス生成
     mils = LFModelInTheLoopSimulation(lf)
@@ -123,7 +129,7 @@ class LFController:
         # モーター制御の強度値を計算（ここを工夫）
         mat_A = np.array([[-0.2, 0.0, 0.2, 0.4],\
             [0.4, 0.2, 0.0, -0.2]])
-        vec_y = np.dot(mat_A,vec_x)
+        vec_y = np.dot(mat_A,vec_x) + 0.2
 
         # 出力範囲を[-1,1]に直して出力
         left, right = vec_y[0], vec_y[1]
@@ -262,12 +268,25 @@ class LFPhysicalModel:
         pos01 = apos01.tolist()
         pos11 = apos11.tolist()
         #
-        pygame.draw.polygon(screen, BLUE, [pos00,pos10,pos01,pos11],0)
+        pygame.draw.polygon(screen, YELLOW, [pos00,pos01,pos11,pos10],0)
 
-        # TODO: 車体描画
+        # 解像度
+        res = self._course.resolution # mm/pixel
+
+        # 左タイヤ
+        pos_ltf = center + np.asarray([self.TIRE_DIAMETER,-self.SHAFT_LENGTH])/res
+        pos_ltr = center + np.asarray([-self.TIRE_DIAMETER,-self.SHAFT_LENGTH])/res
+        pos_ltf = (rotate_pos(pos_ltf,center,angle)+.5).astype(np.int32).tolist()
+        pos_ltr = (rotate_pos(pos_ltr,center,angle)+.5).astype(np.int32).tolist()        
+        pygame.draw.line(screen, BLACK, pos_ltf,pos_ltr,10)
+        # 右左タイヤ        
+        pos_rtf = center + np.asarray([self.TIRE_DIAMETER,self.SHAFT_LENGTH])/res
+        pos_rtr = center + np.asarray([-self.TIRE_DIAMETER,self.SHAFT_LENGTH])/res
+        pos_rtf = (rotate_pos(pos_rtf,center,angle)+.5).astype(np.int32).tolist()
+        pos_rtr = (rotate_pos(pos_rtr,center,angle)+.5).astype(np.int32).tolist()        
+        pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,10)        
 
         # フォトリフレクタ描画
-        res = self._course.resolution # mm/pixel
         for idx in range(NUM_PHOTOREFS):
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
@@ -280,10 +299,10 @@ class LFPhysicalModel:
         pos_cy_mm = self._y_mm # pixel
         car_width_mm = 2*self.SHAFT_LENGTH # 車体幅 in mm
         car_length_mm = car_width_mm+60 # 車体長 in mm
-        pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH+.5)+10
-        pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH+.5)+10
-        car_width_px = car_width_mm/res # 車体幅 in pixel  
-        car_length_px = car_length_mm/res  # 車体長 in mm        
+        pos_topleft_x_px = int(pos_cx_mm/res-self.SHAFT_LENGTH+.5) + 20
+        pos_topleft_y_px = int(pos_cy_mm/res-self.SHAFT_LENGTH+.5) + 25
+        car_width_px = (car_width_mm)/res - 30 # 車体幅 in pixel  
+        car_length_px = (car_length_mm)/res - 20 # 車体長 in pixel    
         rect = [pos_topleft_x_px,pos_topleft_y_px, car_length_px, car_width_px]
         return rect
 
