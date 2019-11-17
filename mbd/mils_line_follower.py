@@ -65,7 +65,17 @@ NUM_PHOTOREFS = 4
 
 # メイン関数
 def main():
-    """ メイン関数 """
+    """ メイン関数
+        
+        フォトリフレクタの配置や車体の重さなどを設定して、
+        シミュレータを走らせています。
+
+        車体の大きさについては、LFPhysicalModelクラスで定数として
+        設定しています。重心は明示的に考慮していません。
+        比例係数の値を変える形で実装しています。
+        より現実に近い物理モデルは各自で検討してください。
+
+    """
 
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG)
@@ -79,11 +89,13 @@ def main():
     #   ↓     |           * pr3 (dx3,dy3)       
     #   y   --|--          * pr4 (dx4,dy4)
     #
-    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4))
-    lf_mount_pos_prf = ((120,-40), (110,-20), (110,20), (120,40))
+    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
+    lf_mount_pos_prf = ((120,-40), (110,-20), (110,20), (120,40)) # mm
 
-    # 車体の重さ (g)
-    lf_weight = 200
+    # 車体の重さ
+    lf_weight = 200 # g（グラム）
+
+    # 車体のインスタンス生成
     lf = LFPhysicalModel(course, \
         weight = lf_weight, \
         mntposprs = lf_mount_pos_prf)
@@ -119,7 +131,21 @@ class LFController:
         self._prs = prs
 
     def prs2mtrs(self):
-        """ フォトリフレクタ→モータ制御 """
+        """ フォトリフレクタからモータ制御信号への変換メソッド
+        
+            4つフォトリフレクタの応答を2つのモーター制御信号に
+            変換する制御の最も重要な部分を実装しています。
+
+            このメソッドに実装するアルゴリズムは、
+            細かい調整を除いて実機でも利用できるはずです。
+            
+            工夫の余地が多く残されています。各自で改善してください。
+
+            なお、現代制御（カルマンフィルタやパーティクルフィルタ）や
+            強化学習（人工知能）など最新の技術を盛り込むのも
+            この部分になります。
+        
+        """
 
         # フォトリフレクタの値を読み出しとベクトル化(vec_x)
         # 白を検出すると 0，黒を検出すると 1
@@ -144,7 +170,15 @@ class LFController:
         self._prs = prs
 
 class LFPhotoReflector:
-    """ フォトリフレクタクラス """
+    """ フォトリフレクタクラス 
+    
+        フォトリフレクタの応答を模擬しています。
+
+        ノイズを加えたり応答をスケールするなど、
+        実機のフォトリフレクタに合わせた調整は、
+        この部分で行うとよいでしょう。
+    
+    """
 
     def __init__(self,course,value = 0.0):
         self._course = course
@@ -188,14 +222,19 @@ class LFPhotoReflector:
 class LFPhysicalModel:
     """ ライントレーサー物理モデルクラス 
         
-        ライントレーサーの物理モデルを実装する。
+        ライントレーサーの物理モデルを実装しています。
+        モーター制御信号が力に比例するという非常に単純なモデルです。
+        
+        左右の和を前後運動、左右の差を回転運動に換算しています。
+
+
 
         入力　モーター制御信号 [-1,1]x2        
         出力　フォトリフレクタの値 [0,1]x4 
     """    
     
     SHAFT_LENGTH = 50 # mm
-    TIRE_DIAMETER = 20 # mm
+    TIRE_DIAMETER = 40 # mm
 
     def __init__(self, \
         course, \
@@ -248,15 +287,16 @@ class LFPhysicalModel:
         self._interval = interval
 
     def draw_body(self,screen):
-        #
+
         rect = np.asarray(self.get_rect_px())
         center = np.asarray(self.get_center_px())
-        #
+
+        # 車体の描画
         apos00 = np.dot([[1,0,0,0],[0,1,0,0]],rect)
         apos10 = np.dot([[1,0,0,0],[0,1,0,1]],rect)
         apos01 = np.dot([[1,0,1,0],[0,1,0,0]],rect)
         apos11 = np.dot([[1,0,1,0],[0,1,0,1]],rect)
-        #
+        # 
         angle = self._angle
         apos00 = rotate_pos(apos00,center,angle)
         apos10 = rotate_pos(apos10,center,angle)
@@ -270,18 +310,19 @@ class LFPhysicalModel:
         #
         pygame.draw.polygon(screen, YELLOW, [pos00,pos01,pos11,pos10],0)
 
-        # 解像度
+        # 解像度の読み込み
         res = self._course.resolution # mm/pixel
 
-        # 左タイヤ
-        pos_ltf = center + np.asarray([self.TIRE_DIAMETER,-self.SHAFT_LENGTH])/res
-        pos_ltr = center + np.asarray([-self.TIRE_DIAMETER,-self.SHAFT_LENGTH])/res
+        # 左タイヤの描画
+        pos_ltf = center + np.asarray([self.TIRE_DIAMETER/2,-self.SHAFT_LENGTH])/res
+        pos_ltr = center + np.asarray([-self.TIRE_DIAMETER/2,-self.SHAFT_LENGTH])/res
         pos_ltf = (rotate_pos(pos_ltf,center,angle)+.5).astype(np.int32).tolist()
         pos_ltr = (rotate_pos(pos_ltr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_ltf,pos_ltr,10)
-        # 右左タイヤ        
-        pos_rtf = center + np.asarray([self.TIRE_DIAMETER,self.SHAFT_LENGTH])/res
-        pos_rtr = center + np.asarray([-self.TIRE_DIAMETER,self.SHAFT_LENGTH])/res
+        
+        # 右タイヤ の描画     
+        pos_rtf = center + np.asarray([self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
+        pos_rtr = center + np.asarray([-self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
         pos_rtf = (rotate_pos(pos_rtf,center,angle)+.5).astype(np.int32).tolist()
         pos_rtr = (rotate_pos(pos_rtr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,10)        
@@ -294,6 +335,7 @@ class LFPhysicalModel:
             pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):
+        # 車体の四隅の座標
         res = self._course.resolution # mm/pixel
         pos_cx_mm = self._x_mm # pixel
         pos_cy_mm = self._y_mm # pixel
@@ -307,6 +349,7 @@ class LFPhysicalModel:
         return rect
 
     def get_center_px(self):
+        # 車体の回転の中心（シャフトの中心）
         res = self._course.resolution # mm/pixel        
         cx_mm = self._x_mm # pixel
         cy_mm = self._y_mm # pixel
@@ -315,24 +358,31 @@ class LFPhysicalModel:
         return [cx_px,cy_px]
 
     def drive(self,fps):
+        """ 車体駆動メソッド """
+
         # モデルパラメータ
-        sFwd = 1.0
-        sRot = 3.0
+        sFwd = 1.0 # 前後運動の力への換算係数
+        sRot = 3.0 # 回転運動の力への換算係数
         kFwd = 3.0 # 抵抗係数
         kRot = 1.0 # 抵抗係数
         weight_kg = 1e-3*self._weight
+
         # センサ値更新 
         self._sense()
+
         # モーター制御信号取得
         mtrs = np.asarray(self._controller.prs2mtrs())
-        # 力の計算
-        forceFwd = mtrs[0]+mtrs[1]
-        forceRot = mtrs[0]-mtrs[1]    
+
+        # モーターから力の計算
+        forceFwd = mtrs[0]+mtrs[1] # 前後運動
+        forceRot = mtrs[0]-mtrs[1] # 回転運動
+
         # 加速度の計算
         angle = self._angle # 車体の方向
         direction  = np.asarray([ np.cos(angle), np.sin(angle)]) 
         accelFwd = sFwd*forceFwd*direction/weight_kg
         accelRot = sRot*forceRot/weight_kg
+
         # 運動方程式
         #
         # d^2p/dt^2 = -k/m dp/dt + a(t)
@@ -342,34 +392,43 @@ class LFPhysicalModel:
         #
         # p = ( x )
         #     ( y )
+        
+        # 前後運動の計算        
         pos = [ 0.0 for idx in range(4) ]
         pos[0] = 1e-3*self._x_mm # m
         pos[1] = 1e-3*self._y_mm # m
         pos[2] = 1e-3*self._vx_mm # m
         pos[3] = 1e-3*self._vy_mm # m
         t = np.linspace(0,1/fps,2)
+        # 前後運動の数値積分
         y = odeint(self._f,pos,t,args=(-kFwd/weight_kg,accelFwd))
         pos = y[-1]
         self._x_mm  = 1e3*pos[0]
         self._y_mm  = 1e3*pos[1]
         self._vx_mm = 1e3*pos[2]
         self._vy_mm = 1e3*pos[3]
-        #
+
+        # 回転運動の計算
         ang = [0.0, 0.0]
         ang[0] = self._angle
         ang[1] = self._w
+        # 回転運動の数値積分        
         z = odeint(self._g,ang,t,args=(-kRot/weight_kg,accelRot))
         ang = z[-1]
         self._angle = ang[0]
         self._w     = ang[1]        
 
     def _f(self,p,t,c,a):
+        """ 前後運動の微分方程式 """
         return [ p[2], p[3], c*p[2]+a[0], c*p[3]+a[1] ]
 
     def _g(self,w,t,c,a):
+        """ 回転運動の微分方程式 """        
         return [ w[1], c*w[1]+a ]
 
     def _sense(self):
+        """ フォトリフレクタの位置情報の更新 """
+
         # 解像度
         res = self._course.resolution # mm/pixel                
         # 車体の位置と向き
@@ -422,7 +481,11 @@ class LFCourse:
         return self._image
 
 class LFModelInTheLoopSimulation(object):
-    """ ライントレースMILSクラス """
+    """ ライントレースMILSクラス 
+    
+        シミュレーションの状態遷移を管理
+    
+    """
 
     # シミュレータ状態の定義
     STATES = ('sinit','slocate','srotate','swait','srun','squit')
