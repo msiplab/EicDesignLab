@@ -153,10 +153,10 @@ class LFController:
             for idx in range(NUM_PHOTOREFS) ])
 
         # モーター制御の強度値を計算（ここを工夫）
-        mat_A = np.array([[-0.2, 0.0, 0.2, 0.4],\
-            [0.4, 0.2, 0.0, -0.2]])
-        vec_y = np.dot(mat_A,vec_x) + 0.2
-
+        mat_A = np.array([[0.4,0.2,0.0,-0.2],\
+            [-0.2,0.0,0.2,0.4]])
+        vec_y = np.dot(mat_A,vec_x) + 0.0
+        
         # 出力範囲を[-1,1]に直して出力
         left, right = vec_y[0], vec_y[1]
         return (clamped(left),clamped(right))
@@ -213,7 +213,7 @@ class LFPhotoReflector:
             for row in range(-1,2):
                 for col in range(-1,2):
                     acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
-            value = acc/9.0 # 平均値併産
+            value = 1.0 - acc/9.0 # 平均値併産
         else:
             value = 0.5
 
@@ -226,8 +226,6 @@ class LFPhysicalModel:
         モーター制御信号が力に比例するという非常に単純なモデルです。
         
         左右の和を前後運動、左右の差を回転運動に換算しています。
-
-
 
         入力　モーター制御信号 [-1,1]x2        
         出力　フォトリフレクタの値 [0,1]x4 
@@ -319,19 +317,23 @@ class LFPhysicalModel:
         pos_ltf = (rotate_pos(pos_ltf,center,angle)+.5).astype(np.int32).tolist()
         pos_ltr = (rotate_pos(pos_ltr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_ltf,pos_ltr,10)
-        
+        pygame.draw.circle(screen, BLACK, pos_ltf,5)
+        pygame.draw.circle(screen, BLACK, pos_ltr,5)        
+
         # 右タイヤ の描画     
         pos_rtf = center + np.asarray([self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
         pos_rtr = center + np.asarray([-self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
         pos_rtf = (rotate_pos(pos_rtf,center,angle)+.5).astype(np.int32).tolist()
         pos_rtr = (rotate_pos(pos_rtr,center,angle)+.5).astype(np.int32).tolist()        
-        pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,10)        
+        pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,10)   
+        pygame.draw.circle(screen, BLACK, pos_rlf,5)
+        pygame.draw.circle(screen, BLACK, pos_rlr,5)        
 
         # フォトリフレクタ描画
         for idx in range(NUM_PHOTOREFS):
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
-            red = (int(self._prs[idx].value*255.0), 0, 0)
+            red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
             pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):
