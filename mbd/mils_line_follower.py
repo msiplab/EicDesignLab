@@ -326,8 +326,8 @@ class LFPhysicalModel:
         pos_rtf = (rotate_pos(pos_rtf,center,angle)+.5).astype(np.int32).tolist()
         pos_rtr = (rotate_pos(pos_rtr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,10)   
-        pygame.draw.circle(screen, BLACK, pos_rlf,5)
-        pygame.draw.circle(screen, BLACK, pos_rlr,5)        
+        pygame.draw.circle(screen, BLACK, pos_rtf,5)
+        pygame.draw.circle(screen, BLACK, pos_rtr,5)        
 
         # フォトリフレクタ描画
         for idx in range(NUM_PHOTOREFS):
