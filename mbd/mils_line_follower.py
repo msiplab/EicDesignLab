@@ -576,12 +576,14 @@ class LFModelInTheLoopSimulation(object):
 
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
+                msg = 'Initializing　...'
                 # 初期化設定
                 self._linefollower.set_position_mm(60,60) # mm
                 self.initialized()
 
             msg = font20.render('', True, BLUE) 
             if self.state == 'slocate': 
+                msg = 'Please locate the car with mouse.'
                 # マウスポインタが車体上かつ左クリックならば
                 # 車体をドラッグ
                 rect = self._linefollower.get_rect_px()
@@ -598,6 +600,7 @@ class LFModelInTheLoopSimulation(object):
                     self.located()
 
             if self.state == 'srotate': 
+                msg = 'Please rotate the car with mouse.'                
                 # 左クリックならば車体を回転
                 if mBtn1 == 1:
                     if not self._flag_rot:
@@ -611,6 +614,7 @@ class LFModelInTheLoopSimulation(object):
                     self.rotated()
 
             if self.state == 'swait':
+                msg = 'Please click to run the car.'                                
                 if mBtn1 == 1:
                     if not self._flag_drag:
                         self._flag_drag = True
@@ -619,6 +623,7 @@ class LFModelInTheLoopSimulation(object):
                     self.start()
 
             if self.state == 'srun':
+                msg = 'Please click to stop the car.'                                                
                 if mBtn1 == 1:
                     self.stop()
                 else:
@@ -634,9 +639,10 @@ class LFModelInTheLoopSimulation(object):
 
             # 画面描画
             self._linefollower.draw_body(self._screen)
-            sur = font40.render(self.state, True, BLACK)
-            self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
-            self._screen.blit(msg,[10,self._height-20])          
+            #sur = font40.render(self.state, True, BLACK)
+            #self._screen.blit(sur,[int(self._width/2.0),int(self._height/2.0)])
+            sur = font20.render(msg, True, BLUE)            
+            self._screen.blit(sur,[10,self._height-20])          
             pygame.display.update()
 
             # クロック
