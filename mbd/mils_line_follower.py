@@ -35,7 +35,7 @@
 準備 (Raspbian の場合)
 
  $ sudo apt-get install python3-numpy
- $ sudo apt-get install  python3-scipy
+ $ sudo apt-get install python3-scipy
  $ sudo apt-get install python3-pygame
  $ sudo apt-get install python3-transitions
 
@@ -62,6 +62,7 @@ COURSE_IMG = 'lfcourse.png'
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
+ACTIVE_WHITE = False # 白で1，黒で0．Falseのときは逆
 
 # メイン関数
 def main():
@@ -153,9 +154,11 @@ class LFController:
             for idx in range(NUM_PHOTOREFS) ])
 
         # モーター制御の強度値を計算（ここを工夫）
-        mat_A = np.array([[0.4,0.2,0.0,-0.2],\
-            [-0.2,0.0,0.2,0.4]])
-        vec_y = np.dot(mat_A,vec_x) + 0.0
+        mat_A = np.array([
+            [-0.2,0.0,0.2,0.4],
+            [0.4,0.2,0.0,-0.2]
+            ])
+        vec_y = np.dot(mat_A,vec_x) + 0.2
         
         # 出力範囲を[-1,1]に直して出力
         left, right = vec_y[0], vec_y[1]
@@ -213,7 +216,10 @@ class LFPhotoReflector:
             for row in range(-1,2):
                 for col in range(-1,2):
                     acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
-            value = 1.0 - acc/9.0 # 平均値併産
+            if ACTIVE_WHITE:
+                value = 1.0 - acc/9.0 # 平均値
+            else:
+                value = acc/9.0 # 平均値
         else:
             value = 0.5
 
@@ -333,7 +339,10 @@ class LFPhysicalModel:
         for idx in range(NUM_PHOTOREFS):
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
-            red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
+            if ACTIVE_WHITE:
+                red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
+            else:
+                red = (int(self._prs[idx].value*255.0), 0, 0)
             pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):
