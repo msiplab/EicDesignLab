@@ -103,6 +103,6 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
 
 - [プログラミングBI/BII](https://github.com/msiplab/EicProgLab)
 - [電子情報通信実験Ⅳ](https://github.com/msiplab/EicEngLabIV)
-電子情報通信実験Ⅳ
+
 ***
 新潟大学工学部工学科　電子情報通信プログラム　新保一成，村松正吾，岡寿樹
