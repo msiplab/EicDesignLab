@@ -2,7 +2,7 @@
 # coding: UTF-8
 """
 ライントレース Model In the Loop Simulation (MILS)
-（α版）
+（β版）
 
 説明
 

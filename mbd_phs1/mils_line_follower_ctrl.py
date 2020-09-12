@@ -1,44 +1,12 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-ライントレース Model In the Loop Simulation (MILS)
-（α版）
+制御クラス
 
 説明
 
-　コースデータは画像(PNGやJPG)として準備してください。
-  プログラムと同じフォルダに置くかフォルダを指定してください。
-
-　制御アルゴリズムの変更についてはLFController クラスの
-　prs2mtrs() メソッドを編集してください。
+　制御アルゴリズムの変更についてはprs2mtrs() メソッドを編集してください。
 　
-　物理モデルの変更についてはLFPhysicalModel クラスの
-  drive() メソッドを編集してください。
-
-プロパティ
-
-- コースデータ（モノクロ画像）
-- サンプリングレート（秒）
-- ライントレーサー
-  - 制御：　フォトリフレクタ入力　-> [制御モジュール] -> モーター制御信号
-  - 構成：　センサ位置（固定）、モータ特性（固定）
-  - 状態：　座標、方向、速度、加速度
-  - 振舞：　センシング、移動
-
-機能
-
-- コース表示
-- ライントレーサー表示
-- フォトリフレクタへの白黒情報を提供
-- ライントレーサー位置情報の取得
-
-準備 (Raspbian の場合)
-
- $ sudo apt-get install python3-numpy
- $ sudo apt-get install python3-scipy
- $ sudo apt-get install python3-pygame
- $ sudo apt-get install python3-transitions
-
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
 All rights revserved (c) Shogo MURAMATSU

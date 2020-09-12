@@ -1,49 +1,23 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-ライントレース Model In the Loop Simulation (MILS)
-（α版）
+　物理モデル
 
 説明
 
-　コースデータは画像(PNGやJPG)として準備してください。
-  プログラムと同じフォルダに置くかフォルダを指定してください。
-
-　制御アルゴリズムの変更についてはLFController クラスの
-　prs2mtrs() メソッドを編集してください。
-　
-　物理モデルの変更についてはLFPhysicalModel クラスの
-  drive() メソッドを編集してください。
-
-プロパティ
-
-- コースデータ（モノクロ画像）
-- サンプリングレート（秒）
-- ライントレーサー
-  - 制御：　フォトリフレクタ入力　-> [制御モジュール] -> モーター制御信号
-  - 構成：　センサ位置（固定）、モータ特性（固定）
-  - 状態：　座標、方向、速度、加速度
-  - 振舞：　センシング、移動
-
-機能
-
-- コース表示
-- ライントレーサー表示
-- フォトリフレクタへの白黒情報を提供
-- ライントレーサー位置情報の取得
-
-準備 (Raspbian の場合)
-
- $ sudo apt-get install python3-numpy
- $ sudo apt-get install python3-scipy
- $ sudo apt-get install python3-pygame
- $ sudo apt-get install python3-transitions
+　物理モデルの変更については drive() メソッドを編集してください。
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
+
+参考資料
+
+- 三平 満司：「非ホロノミック系のフィードバック制御」計測と制御
+　1997 年 36 巻 6 号 p. 396-403
 
 All rights revserved (c) Shogo MURAMATSU
 """
 from mils_line_follower_ctrl import LFController
+from mils_line_follower_phrf import LFPhotoReflector
 from scipy.integrate import odeint
 import numpy as np
 import pygame
@@ -55,9 +29,12 @@ GREEN  = (  0, 255,   0)
 BLUE   = (  0,   0, 255)
 YELLOW = (  255, 128, 0)
 
+# 車体のパラメータ
+SHAFT_LENGTH = 50 # mm
+TIRE_DIAMETER = 40 # mm
+
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
-ACTIVE_WHITE = False # 白で1，黒で0．Falseのときは逆
 
 def rotate_pos(pos,center,angle):
     """ 座標位置の回転 """
@@ -66,59 +43,6 @@ def rotate_pos(pos,center,angle):
         [ np.sin(angle),  np.cos(angle) ]
     ])
     return rotmtx.dot(pos-center) + center
-
-class LFPhotoReflector:
-    """ フォトリフレクタクラス 
-    
-        フォトリフレクタの応答を模擬しています。
-
-        ノイズを加えたり応答をスケールするなど、
-        実機のフォトリフレクタに合わせた調整は、
-        この部分で行うとよいでしょう。
-    
-    """
-
-    def __init__(self,course,value = 0.0):
-        self._course = course
-        self._value = value
-        self._pos_px = [0.0, 0.0]
-    
-    @property
-    def value(self):
-        return self.measurement()
-    
-    @value.setter
-    def value(self,value):
-        self._value = value
-
-    @property
-    def pos_px(self):
-        return self._pos_px
-
-    @pos_px.setter
-    def pos_px(self,pos_px):
-        self._pos_px = pos_px
-
-    def measurement(self):
-        # センサ位置周辺の値をリターン
-        x_px = int(self._pos_px[0]+0.5)
-        y_px = int(self._pos_px[1]+0.5)     
-        if 1 < y_px and y_px < self._course.height-1 and \
-            1 < x_px and x_px < self._course.width-1:
-            pxarray = pygame.PixelArray(self._course.image) 
-            # 3x3 領域の平均を出力
-            acc = 0.0
-            for row in range(-1,2):
-                for col in range(-1,2):
-                    acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
-            if ACTIVE_WHITE:
-                value = 1.0 - acc/9.0 # 平均値
-            else:
-                value = acc/9.0 # 平均値
-        else:
-            value = 0.5
-
-        return value
 
 class LFPhysicalModel:
     """ ライントレーサー物理モデルクラス 
@@ -132,20 +56,17 @@ class LFPhysicalModel:
         出力　フォトリフレクタの値 [0,1]x4 
     """    
     
-    SHAFT_LENGTH = 50 # mm
-    TIRE_DIAMETER = 40 # mm
-
     def __init__(self, \
         course, \
         weight = 200, \
-        mntposprs =  ((120,-40), (110,-20), (110,20), (120,40)) \
+        mntposprs = ((120,-40), (110,-20), (110,20), (120,40))
         ):
 
         self._course = course
         self._weight = weight
         self._mntposprs = mntposprs
-        self._x_mm = self.SHAFT_LENGTH + 10 # mm
-        self._y_mm = self.SHAFT_LENGTH + 10 # mm
+        self._x_mm = SHAFT_LENGTH + 10 # mm
+        self._y_mm = SHAFT_LENGTH + 10 # mm
         self._angle = 0.0 # rad
         self.reset()
 
@@ -213,8 +134,8 @@ class LFPhysicalModel:
         res = self._course.resolution # mm/pixel
 
         # 左タイヤの描画
-        pos_ltf = center + np.asarray([self.TIRE_DIAMETER/2,-self.SHAFT_LENGTH])/res
-        pos_ltr = center + np.asarray([-self.TIRE_DIAMETER/2,-self.SHAFT_LENGTH])/res
+        pos_ltf = center + np.asarray([TIRE_DIAMETER/2,-SHAFT_LENGTH])/res
+        pos_ltr = center + np.asarray([-TIRE_DIAMETER/2,-SHAFT_LENGTH])/res
         pos_ltf = (rotate_pos(pos_ltf,center,angle)+.5).astype(np.int32).tolist()
         pos_ltr = (rotate_pos(pos_ltr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_ltf,pos_ltr,int(12/res))
@@ -222,8 +143,8 @@ class LFPhysicalModel:
         pygame.draw.circle(screen, BLACK, pos_ltr,int(6/res))
 
         # 右タイヤ の描画     
-        pos_rtf = center + np.asarray([self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
-        pos_rtr = center + np.asarray([-self.TIRE_DIAMETER/2,self.SHAFT_LENGTH])/res
+        pos_rtf = center + np.asarray([TIRE_DIAMETER/2,SHAFT_LENGTH])/res
+        pos_rtr = center + np.asarray([-TIRE_DIAMETER/2,SHAFT_LENGTH])/res
         pos_rtf = (rotate_pos(pos_rtf,center,angle)+.5).astype(np.int32).tolist()
         pos_rtr = (rotate_pos(pos_rtr,center,angle)+.5).astype(np.int32).tolist()        
         pygame.draw.line(screen, BLACK, pos_rtf,pos_rtr,int(12/res))   
@@ -234,7 +155,7 @@ class LFPhysicalModel:
         for idx in range(NUM_PHOTOREFS):
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
-            if ACTIVE_WHITE:
+            if LFPhotoReflector.ACTIVE_WHITE:
                 red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
             else:
                 red = (int(self._prs[idx].value*255.0), 0, 0)
@@ -245,12 +166,12 @@ class LFPhysicalModel:
         res = self._course.resolution # mm/pixel
         pos_cx_mm = self._x_mm # pixel
         pos_cy_mm = self._y_mm # pixel
-        car_width_mm = 2*self.SHAFT_LENGTH # 車体幅 in mm
+        car_width_mm = 2*SHAFT_LENGTH # 車体幅 in mm
         car_length_mm = car_width_mm+60 # 車体長 in mm
-        pos_topleft_x_px = int((pos_cx_mm-0.7*self.SHAFT_LENGTH)/res+.5)
-        pos_topleft_y_px = int((pos_cy_mm-0.7*self.SHAFT_LENGTH)/res+.5)
-        car_width_px = (car_width_mm-0.6*self.SHAFT_LENGTH)/res # 車体幅 in pixel  
-        car_length_px = (car_length_mm-0.6*self.SHAFT_LENGTH)/res # 車体長 in pixel    
+        pos_topleft_x_px = int((pos_cx_mm-0.7*SHAFT_LENGTH)/res+.5)
+        pos_topleft_y_px = int((pos_cy_mm-0.7*SHAFT_LENGTH)/res+.5)
+        car_width_px = (car_width_mm-0.6*SHAFT_LENGTH)/res # 車体幅 in pixel  
+        car_length_px = (car_length_mm-0.6*SHAFT_LENGTH)/res # 車体長 in pixel    
         rect = [pos_topleft_x_px,pos_topleft_y_px, car_length_px, car_width_px]
         return rect
 
@@ -264,7 +185,22 @@ class LFPhysicalModel:
         return [cx_px,cy_px]
 
     def drive(self,fps):
-        """ 車体駆動メソッド """
+        """ 車体駆動メソッド"""
+
+        # センサ値更新 
+        self._sense()
+        
+        # モーター制御信号取得
+        mtrs = np.asarray(self._controller.prs2mtrs())
+
+        self.drive2019(mtrs,fps)        
+
+    def drive2020(self,mtrs,fps):
+        """ 車体駆動メソッド （2020）"""
+    
+    
+    def drive2019(self,mtrs,fps):
+        """ 車体駆動メソッド （2019）"""
 
         # モデルパラメータ
         sFwd = 1.0 # 前後運動の力への換算係数
@@ -272,12 +208,6 @@ class LFPhysicalModel:
         kFwd = 3.0 # 抵抗係数
         kRot = 1.0 # 抵抗係数
         weight_kg = 1e-3*self._weight
-
-        # センサ値更新 
-        self._sense()
-
-        # モーター制御信号取得
-        mtrs = np.asarray(self._controller.prs2mtrs())
 
         # モーターから力の計算
         forceFwd = mtrs[0]+mtrs[1] # 前後運動
