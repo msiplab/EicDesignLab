@@ -1,47 +1,13 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-ライントレース Model In the Loop Simulation (MILS)
-（β版）
+制御アルゴリズム
 
 説明
 
-　コースデータは画像(PNGやJPG)として準備してください。
-  プログラムと同じフォルダに置くかフォルダを指定してください。
+　制御アルゴリズムの変更についてはprs2mtrs() メソッドを編集してください。
 
-　制御アルゴリズムの変更についてはLFController クラスの
-　prs2mtrs() メソッドを編集してください。
-　
-　物理モデルの変更についてはLFPhysicalModel クラスの
-  drive() メソッドを編集してください。
-
-プロパティ
-
-- コースデータ（モノクロ画像）
-- サンプリングレート（秒）
-- ライントレーサー
-  - 制御：　フォトリフレクタ入力　-> [制御モジュール] -> モーター制御信号
-  - 構成：　センサ位置（固定）、モータ特性（固定）
-  - 状態：　座標、方向、速度、加速度
-  - 振舞：　センシング、移動
-
-機能
-
-- コース表示
-- ライントレーサー表示
-- フォトリフレクタへの白黒情報を提供
-- ライントレーサー位置情報の取得
-
-準備 (Raspbian の場合)
-
- $ sudo apt-get install python3-numpy
- $ sudo apt-get install python3-scipy
- $ sudo apt-get install python3-pygame
- $ sudo apt-get install python3-transitions
-
-「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
-
-All rights revserved (c) Shogo MURAMATSU
+All rights revserved 2019-2020 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
 from transitions import Machine
@@ -49,18 +15,14 @@ import pygame
 import sys
 import math
 
-# 色の定義
-WHITE  = (255, 255, 255)
-BLACK  = (  0,   0,   0)
-GREEN  = (  0, 255,   0)    
-BLUE   = (  0,   0, 255)
-YELLOW = (  255, 128, 0)
-
 # コースデータ画像
 #COURSE_IMG = 'lfcourse.png'
 #COURSE_RES = 1.25
 COURSE_IMG = 'finalcourse.png'
 COURSE_RES = 2.5
+
+# 色の定義
+BLUE   = (  0, 0, 255 )
 
 # メイン関数
 def main():
@@ -75,29 +37,11 @@ def main():
         より現実に近い物理モデルは各自で検討してください。
 
     """
-
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG,res=COURSE_RES)
 
-    # シャフト中心(+)からのフォトリフレクタ(*)の
-    # 相対座標[mm]
-    #  
-    #       --|--          * pr1 (dx1,dy1)
-    #         |           * pr2 (dx2,dy2)       
-    #  (0,0)  + -------------            → x
-    #   ↓     |           * pr3 (dx3,dy3)       
-    #   y   --|--          * pr4 (dx4,dy4)
-    #
-    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
-    lf_mount_pos_prf = ((120,-60), (100,-20), (100,20), (120,60)) # mm
-    
-    # 車体の重さ
-    lf_weight = 100 # g（グラム）
-
     # 車体のインスタンス生成
-    lf = LFPhysicalModel(course, \
-        weight = lf_weight, \
-        mntposprs = lf_mount_pos_prf)
+    lf = LFPhysicalModel(course)
 
     # MILSオブジェクトのインスタンス生成
     mils = LFModelInTheLoopSimulation(lf)
