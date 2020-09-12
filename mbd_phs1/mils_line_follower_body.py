@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-　物理モデル
+ライントレーサー物理モデル
 
 説明
 

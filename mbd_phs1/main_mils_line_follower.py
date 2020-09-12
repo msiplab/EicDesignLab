@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-制御アルゴリズム
+ライントレースシミュレータ
 
 説明
 
@@ -16,9 +16,9 @@ import sys
 import math
 
 # コースデータ画像
-#COURSE_IMG = 'lfcourse.png'
+#COURSE_IMG = '../images/lfcourse.png'
 #COURSE_RES = 1.25
-COURSE_IMG = 'finalcourse.png'
+COURSE_IMG = '../images/finalcourse.png'
 COURSE_RES = 2.5
 
 # 色の定義

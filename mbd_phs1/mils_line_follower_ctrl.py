@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-制御クラス
+ライントレーサー制御クラス
 
 説明
 
