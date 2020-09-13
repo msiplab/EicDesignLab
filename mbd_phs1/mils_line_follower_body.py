@@ -34,14 +34,14 @@ import pygame
     #
     # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
 LF_MOUNT_POS_PRF = ((120,-60), (100,-20), (100,20), (120,60)) # mm
-LF_WEIGHT = 100    # 車体の重さ g（グラム）
+LF_WEIGHT = 360    # 車体の重さ g（グラム）
 SHAFT_LENGTH = 50  # シャフト長 mm
-TIRE_DIAMETER = 40 # タイヤ直径 mm
+TIRE_DIAMETER = 58 # タイヤ直径 mm
 
 # モデルパラメータ（要調整）
 CONV_COEF_FWD = 1.0 # 前後運動の力への換算係数（形状・重心などに依存）
-CONV_COEF_ROT = 3.0 # 回転運動の力への換算係数（形状・重心などに依存）
-RES_COEF_FWD  = 3.0 # 前後運動の抵抗係数（すべりなどに依存）
+CONV_COEF_ROT = 6.0 # 回転運動の力への換算係数（形状・重心などに依存）
+RES_COEF_FWD  = 2.0 # 前後運動の抵抗係数（すべりなどに依存）
 RES_COEF_ROT  = 1.0 # 回転運動の抵抗係数（すべりなどに依存）
 
 # フォトリフレクタ数
@@ -63,14 +63,14 @@ def rotate_pos(pos,center,angle):
     return rotmtx.dot(pos-center) + center
 
 class LFPhysicalModel:
-    """ ライントレーサー物理モデルクラス 
+    """ ライントレーサ物理モデルクラス 
         
-        ライントレーサーの物理モデルを実装しています。
+        ライントレーサの物理モデルを実装しています。
         モーター制御信号が力に比例するという非常に単純なモデルです。
         
         左右の和を前後運動、左右の差を回転運動に換算しています。
 
-        入力　モーター制御信号 [-1,1]x2        
+        入力　モータ制御信号 [-1,1]x2        
         出力　フォトリフレクタの値 [0,1]x4 
     """    
     
@@ -161,16 +161,16 @@ class LFPhysicalModel:
         #x = odeint(self._h,v0,t,args=(-RES_COEF_FWD/weight_kg,accelFwd))
         #v1 = x[-1][0]
         t = 1/fps
-        a = accelFwd
-        c = -RES_COEF_FWD/weight_kg
-        v1 = -a/c + np.exp(c*t)*(a/c + v0)
+        al = accelFwd
+        cl = -RES_COEF_FWD/weight_kg
+        v1 = -al/cl + np.exp(cl*t)*(al/cl + v0)
 
         # 回転速度の計算              
         #z = odeint(self._h,w0,t,args=(-RES_COEF_ROT/weight_kg,accelRot))
         #w1 = z[-1][0]
-        a = accelRot
-        c = -RES_COEF_ROT/weight_kg
-        w1 = -a/c + np.exp(c*t)*(a/c + w0)
+        aa = accelRot
+        ca = -RES_COEF_ROT/weight_kg
+        w1 = -aa/ca + np.exp(ca*t)*(aa/ca + w0)
 
         twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
         return twist
