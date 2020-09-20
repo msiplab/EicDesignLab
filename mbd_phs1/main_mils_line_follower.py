@@ -5,7 +5,10 @@
 
 説明
 
-　制御アルゴリズムの変更についてはprs2mtrs() メソッドを編集してください。
+　コースの切り替えについては以下のプロパティを編集してください。
+
+    - OURSE_IMG  # コース画像
+    - COURSE_RES # コース画像解像度 
 
 All rights revserved 2019-2020 (c) Shogo MURAMATSU
 """
@@ -16,10 +19,10 @@ import sys
 import math
 
 # コースデータ画像
-#COURSE_IMG = '../images/lfcourse.png'
-#COURSE_RES = 1.25
-COURSE_IMG = '../images/finalcourse.png'
-COURSE_RES = 2.5
+COURSE_IMG = '../images/lfcourse.png'
+COURSE_RES = 1.25
+#COURSE_IMG = '../images/finalcourse.png'
+#COURSE_RES = 2.5
 
 # 色の定義
 BLUE   = (  0, 0, 255 )
@@ -128,7 +131,7 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'quit',        'source': 'srun',    'dest': 'squit',   'after': 'close'  }
     )
 
-    def __init__(self, linefollower, fps = 10):
+    def __init__(self, linefollower, fps = 20):
 
         self._clock = pygame.time.Clock()
         self._fps = fps

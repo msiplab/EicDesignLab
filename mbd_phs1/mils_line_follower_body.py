@@ -5,12 +5,22 @@
 
 説明
 
-　物理モデルの変更については drive() メソッドを編集してください。
+　物理モデルの変更については以下のパラメータおよび mtrs2twist() メソッドを編集してください。
+  
+  - LF_MOUNT_POS_PRF # フォトリフレクタの配置
+  - LF_WEIGHT        # 車体の重さ g
+  - SHAFT_LENGTH     # シャフト長 mm 
+  - TIRE_DIAMETER    # タイヤ直径 mm
+  - COEF_CTR_PROP    # 比例制御係数
+  - COEF_VF_LIN      # 直線運動の粘性摩擦係数
+  - COEF_VF_ROT      # 旋廻運動の粘性摩擦係数
 
 参考資料
 
 - 三平 満司：「非ホロノミック系のフィードバック制御」計測と制御
-　1997 年 36 巻 6 号 p. 396-403
+　36 巻 6 号 p. 396-403, 1997 年 
+- Gregor Klancar, Andrej Zdesar, Saso Blazic and Igor Skrjanc: "Wheeled Mobile Robotics,"
+  Elsevier, 2017
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
@@ -23,26 +33,27 @@ import numpy as np
 import pygame
 
 # 車体のパラメータ
-    # シャフト中心(+)からのフォトリフレクタ(*)の
-    # 相対座標[mm]
-    #  
-    #       --|--          * pr1 (dx1,dy1)
-    #         |           * pr2 (dx2,dy2)       
-    #  (0,0)  + -------------            → x
-    #   ↓     |           * pr3 (dx3,dy3)       
-    #   y   --|--          * pr4 (dx4,dy4)
-    #
-    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
+#
+# シャフト中心(+)からのフォトリフレクタ(*)の
+# 相対座標[mm]
+#  
+#       --|--          * pr1 (dx1,dy1)
+#         |           * pr2 (dx2,dy2)       
+#  (0,0)  + -------------            → x
+#   ↓     |           * pr3 (dx3,dy3)       
+#   y   --|--          * pr4 (dx4,dy4)
+#
+# ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
+#
 LF_MOUNT_POS_PRF = ((120,-60), (100,-20), (100,20), (120,60)) # mm
 LF_WEIGHT = 360    # 車体の重さ g（グラム）
-SHAFT_LENGTH = 50  # シャフト長 mm
+SHAFT_LENGTH = 50  # シャフト長 mm 
 TIRE_DIAMETER = 58 # タイヤ直径 mm
 
 # モデルパラメータ（要調整）
-CONV_COEF_FWD = 1.0 # 前後運動の力への換算係数（形状・重心などに依存）
-CONV_COEF_ROT = 6.0 # 回転運動の力への換算係数（形状・重心などに依存）
-RES_COEF_FWD  = 2.0 # 前後運動の抵抗係数（すべりなどに依存）
-RES_COEF_ROT  = 1.0 # 回転運動の抵抗係数（すべりなどに依存）
+COEF_CTR_PROP = 3.0 # 比例制御係数
+COEF_VF_LIN = 0.1 # 直線運動の粘性摩擦係数
+COEF_VF_ROT = 0.1 # 旋廻運動の粘性摩擦係数
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
@@ -66,7 +77,7 @@ class LFPhysicalModel:
     """ ライントレーサ物理モデルクラス 
         
         ライントレーサの物理モデルを実装しています。
-        モーター制御信号が力に比例するという非常に単純なモデルです。
+        モータ制御信号が力に比例するという非常に単純なモデルです。
         
         左右の和を前後運動、左右の差を回転運動に換算しています。
 
@@ -143,41 +154,33 @@ class LFPhysicalModel:
         return [ np.cos(theta)*v, np.sin(theta)*v, w ]
     
     def mtrs2twist(self,mtrs,v0,w0,fps):
-        """ モータ制御信号→速度制御信号変換 """
+        """ モータ制御信号→速度変換 """
        
         # 車体重量の換算
-        weight_kg = 1e-3*self._weight # g -> kg
+        mc_kg = 1e-3*self._weight # g -> kg
 
-        # モーターから力の計算
-        forceFwd = mtrs[0]+mtrs[1] #ｔ直線運動
-        forceRot = mtrs[0]-mtrs[1] # 回転運動
-        
-        # 加速度の計算
-        accelFwd = CONV_COEF_FWD*forceFwd/weight_kg
-        accelRot = CONV_COEF_ROT*forceRot/weight_kg
+        # モーター電圧から速度・角速度の計算
+        ulin = COEF_CTR_PROP*(mtrs[0]+mtrs[1]) # 直線運動
+        urot = COEF_CTR_PROP*(mtrs[0]-mtrs[1]) # 回転運動
+
+        # サンプリング間隔
+        h = 1/fps
 
         # 直線速度の計算      
-        #t = np.linspace(0,1/fps,2)
-        #x = odeint(self._h,v0,t,args=(-RES_COEF_FWD/weight_kg,accelFwd))
-        #v1 = x[-1][0]
-        t = 1/fps
-        al = accelFwd
-        cl = -RES_COEF_FWD/weight_kg
-        v1 = -al/cl + np.exp(cl*t)*(al/cl + v0)
+        mu_clin = COEF_VF_LIN # 直線運動の粘性摩擦係数 
+        Tlin = (mc_kg+0.5)/(mu_clin+20)  # 時定数
+        clin = 1/(0.4*mu_clin+8)
+        v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
 
-        # 回転速度の計算              
-        #z = odeint(self._h,w0,t,args=(-RES_COEF_ROT/weight_kg,accelRot))
-        #w1 = z[-1][0]
-        aa = accelRot
-        ca = -RES_COEF_ROT/weight_kg
-        w1 = -aa/ca + np.exp(ca*t)*(aa/ca + w0)
+        # 回転速度の計算
+        nu_crot = COEF_VF_ROT # 回転運動の粘性摩擦係数 
+        Trot = (mc_kg+0.5)/(40*nu_crot+20) # 時定数
+        crot = 1/(8*nu_crot+0.4)
+        w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot
 
+        # 出力
         twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
         return twist
-    
-    #def _h(self,v,t,c,a):
-    #    # 運動方程式
-    #    return c*v+a
 
     @property
     def course(self):
