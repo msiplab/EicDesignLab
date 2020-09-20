@@ -11,9 +11,9 @@
   - LF_WEIGHT        # 車体の重さ g
   - SHAFT_LENGTH     # シャフト長 mm 
   - TIRE_DIAMETER    # タイヤ直径 mm
-  - COEF_CTR_PROP    # 比例制御係数
-  - COEF_VF_LIN      # 直線運動の粘性摩擦係数
-  - COEF_VF_ROT      # 旋廻運動の粘性摩擦係数
+  - COEF_K_P         # 比例制御係数
+  - COEF_MU_CLIN     # 直線運動の粘性摩擦係数
+  - COEF_NU_CROT     # 旋廻運動の粘性摩擦係数
 
 参考資料
 
@@ -51,9 +51,9 @@ SHAFT_LENGTH = 50  # シャフト長 mm
 TIRE_DIAMETER = 58 # タイヤ直径 mm
 
 # モデルパラメータ（要調整）
-COEF_CTR_PROP = 3.0 # 比例制御係数
-COEF_VF_LIN = 0.1 # 直線運動の粘性摩擦係数
-COEF_VF_ROT = 0.1 # 旋廻運動の粘性摩擦係数
+COEF_K_P = 3.0 # 比例制御係数
+COEF_MU_CLIN = 0.1 # 直線運動の粘性摩擦係数
+COEF_NU_CROT = 0.1 # 旋廻運動の粘性摩擦係数
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
@@ -108,6 +108,34 @@ class LFPhysicalModel:
             self._prs[idx].value = 0.0
         self._controller.photorefs = self._prs
 
+    def mtrs2twist(self,mtrs,v0,w0,fps):
+        """ モータ制御信号→速度変換 """
+       
+        # 車体重量の換算
+        mc_kg = 1e-3*self._weight # g -> kg
+
+        # モーター電圧から速度・角速度の計算
+        ulin = COEF_K_P*(mtrs[0]+mtrs[1]) # 直線運動
+        urot = COEF_K_P*(mtrs[0]-mtrs[1]) # 回転運動
+
+        # サンプリング間隔
+        h = 1/fps
+
+        # 直線速度の計算      
+        mu_clin = COEF_MU_CLIN # 直線運動の粘性摩擦係数 
+        Tlin = (mc_kg+0.5)/(mu_clin+20)  # 時定数
+        clin = 1/(0.4*mu_clin+8)
+        v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
+
+        # 回転速度の計算
+        nu_crot = COEF_NU_CROT # 回転運動の粘性摩擦係数 
+        Trot = (mc_kg+0.5)/(40*nu_crot+20) # 時定数
+        crot = 1/(8*nu_crot+0.4)
+        w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot
+
+        # 出力
+        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
+        return twist
     def drive(self,fps):
         """ 車体駆動メソッド"""
         # センサ値更新 
@@ -152,35 +180,6 @@ class LFPhysicalModel:
         #    (  θ )   (  0   )    ( 1 )
         theta = pos[2]
         return [ np.cos(theta)*v, np.sin(theta)*v, w ]
-    
-    def mtrs2twist(self,mtrs,v0,w0,fps):
-        """ モータ制御信号→速度変換 """
-       
-        # 車体重量の換算
-        mc_kg = 1e-3*self._weight # g -> kg
-
-        # モーター電圧から速度・角速度の計算
-        ulin = COEF_CTR_PROP*(mtrs[0]+mtrs[1]) # 直線運動
-        urot = COEF_CTR_PROP*(mtrs[0]-mtrs[1]) # 回転運動
-
-        # サンプリング間隔
-        h = 1/fps
-
-        # 直線速度の計算      
-        mu_clin = COEF_VF_LIN # 直線運動の粘性摩擦係数 
-        Tlin = (mc_kg+0.5)/(mu_clin+20)  # 時定数
-        clin = 1/(0.4*mu_clin+8)
-        v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
-
-        # 回転速度の計算
-        nu_crot = COEF_VF_ROT # 回転運動の粘性摩擦係数 
-        Trot = (mc_kg+0.5)/(40*nu_crot+20) # 時定数
-        crot = 1/(8*nu_crot+0.4)
-        w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot
-
-        # 出力
-        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
-        return twist
 
     @property
     def course(self):
