@@ -1,4 +1,21 @@
 # coding: UTF-8
+"""
+	Mock テスト
+
+	gpiozero と pigpio の導入が必要です。
+
+	Raspberry Pi OS:
+	
+	$ sudo apt updage
+	$ sudo apt install python3-gpiozero python3-pigpio
+
+	Windows:
+
+	> py -m pip install gpiozero pigpio
+
+
+	All rights revserved 2019-2020 (c) Shogo MURAMATSU
+"""
 import unittest
 from gpiozero.pins.mock import MockFactory
 from gpiozero import Device, Motor, LED
