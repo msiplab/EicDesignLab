@@ -160,7 +160,7 @@ class LFPhysicalModel:
         #
         J_lin = J_bar_g + J_w + (1/2)*mc_kg*(r_w**2)
         T_lin = J_lin / (nu_bar_g + nu_w + (1/2)*mu_clin*(r_w**2)) # 時定数
-        c_lin = (r_w*zeta) / (2*(nu_bar_g + nu_w) + mu_clin*(r_w**2)) # 時定数
+        c_lin = (r_w*zeta) / (2*(nu_bar_g + nu_w) + mu_clin*(r_w**2)) 
         #
         v1 = v0*np.exp(-h/T_lin) + c_lin*(1-np.exp(-h/T_lin))*u_lin
 
@@ -173,7 +173,7 @@ class LFPhysicalModel:
         #
         J_rot = J_bar_g + J_w + 2*eta*(J_c + mc_kg*(l_c**2))        
         T_rot = J_rot / (nu_bar_g + nu_w + 2*eta*nu_crot) # 時定数
-        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + 2*eta*nu_crot)) # 時定数
+        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + 2*eta*nu_crot)) 
         #
         w1 = w0*np.exp(-h/T_rot) + c_rot*(1-np.exp(-h/T_rot))*u_rot
 
