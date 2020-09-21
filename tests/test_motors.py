@@ -6,8 +6,8 @@
 
 	Raspberry Pi OS:
 	
-	$ sudo apt updage
-	$ sudo apt install python3-gpiozero python3-pigpio
+	$ sudo apt-get update
+	$ sudo apt-get install python3-gpiozero python3-pigpio
 
 	Windows:
 
