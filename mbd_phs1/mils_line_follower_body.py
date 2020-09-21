@@ -9,11 +9,11 @@
   
   - LF_MOUNT_POS_PRF # フォトリフレクタの配置
   - LF_WEIGHT        # 車体の重さ g
-  - SHAFT_LENGTH     # シャフト長 mm 
+  - SHAFT_LENGTH     # シャフト長 mm （１本）
   - TIRE_DIAMETER    # タイヤ直径 mm
   - COEF_K_P         # 比例制御係数
-  - COEF_MU_CLIN     # 直線運動の粘性摩擦係数
-  - COEF_NU_CROT     # 旋廻運動の粘性摩擦係数
+  - PARAMS_MU_CLIN     # 直線運動の粘性摩擦係数
+  - PARAMS_NU_CROT     # 旋廻運動の粘性摩擦係数
 
 参考資料
 
@@ -47,13 +47,15 @@ import pygame
 #
 LF_MOUNT_POS_PRF = ((120,-60), (100,-20), (100,20), (120,60)) # mm
 LF_WEIGHT = 360    # 車体の重さ g（グラム）
-SHAFT_LENGTH = 50  # シャフト長 mm 
+SHAFT_LENGTH = 50  # シャフト長 mm （１本）
 TIRE_DIAMETER = 58 # タイヤ直径 mm
 
-# モデルパラメータ（要調整）
+# 制御パラメータ（要調整）
 COEF_K_P = 3.0 # 比例制御係数
-COEF_MU_CLIN = 0.1 # 直線運動の粘性摩擦係数
-COEF_NU_CROT = 0.1 # 旋廻運動の粘性摩擦係数
+
+## 物理モデルパラメータ（要調整）
+PARAMS_MU_CLIN = 1e-3 # kg/s 車体の直線運動の粘性摩擦係数（便宜上）
+PARAMS_NU_CROT = 1e-3 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
@@ -109,7 +111,9 @@ class LFPhysicalModel:
         self._controller.photorefs = self._prs
 
     def mtrs2twist(self,mtrs,v0,w0,fps):
-        """ モータ制御信号→速度変換 """
+        """ モータ制御信号→速度変換 
+            h = 1/fps 間隔で制御信号をゼロ次ホールドすると仮定        
+        """
        
         # 車体重量の換算
         mc_kg = 1e-3*self._weight # g -> kg
@@ -122,13 +126,13 @@ class LFPhysicalModel:
         h = 1/fps
 
         # 直線速度の計算      
-        mu_clin = COEF_MU_CLIN # 直線運動の粘性摩擦係数 
+        mu_clin = PARAMS_MU_CLIN # 直線運動の粘性摩擦係数 
         Tlin = (mc_kg+0.5)/(mu_clin+20)  # 時定数
         clin = 1/(0.4*mu_clin+8)
         v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
 
         # 回転速度の計算
-        nu_crot = COEF_NU_CROT # 回転運動の粘性摩擦係数 
+        nu_crot = PARAMS_NU_CROT # 回転運動の粘性摩擦係数 
         Trot = (mc_kg+0.5)/(40*nu_crot+20) # 時定数
         crot = 1/(8*nu_crot+0.4)
         w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot

@@ -19,7 +19,7 @@ class LFPhotoReflector:
         この部分で行うとよいでしょう。
     
     """
-    ACTIVE_WHITE = False # 白で1，黒で0．Falseのときは逆
+    ACTIVE_WHITE = True # 白で1，黒で0．Falseのときは逆
 
     def __init__(self,course,value = 0.0):
         self._course = course

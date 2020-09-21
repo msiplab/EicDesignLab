@@ -1,16 +1,23 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-ライントレーサ物理モデル
+ライントレーサー物理モデル
 
 説明
 
-　物理モデルの変更については drive() メソッドを編集してください。
+　物理モデルの変更については以下のパラメータおよび mtrs2twist() メソッドを編集してください。
+  
+  - LF_MOUNT_POS_PRF # フォトリフレクタの配置
+  - LF_WEIGHT        # 車体の重さ g
+  - SHAFT_LENGTH     # シャフト長 mm (１本)
+  - TIRE_DIAMETER    # タイヤ直径 mm
 
 参考資料
 
 - 三平 満司：「非ホロノミック系のフィードバック制御」計測と制御
-　1997 年 36 巻 6 号 p. 396-403
+　36 巻 6 号 p. 396-403, 1997 年 
+- Gregor Klancar, Andrej Zdesar, Saso Blazic and Igor Skrjanc: "Wheeled Mobile Robotics,"
+  Elsevier, 2017
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
@@ -23,26 +30,43 @@ import numpy as np
 import pygame
 
 # 車体のパラメータ
-    # シャフト中心(+)からのフォトリフレクタ(*)の
-    # 相対座標[mm]
-    #  
-    #       --|--          * pr1 (dx1,dy1)
-    #         |           * pr2 (dx2,dy2)       
-    #  (0,0)  + -------------            → x
-    #   ↓     |           * pr3 (dx3,dy3)       
-    #   y   --|--          * pr4 (dx4,dy4)
-    #
-    # ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
+#
+# シャフト中心(+)からのフォトリフレクタ(*)の
+# 相対座標[mm]
+#  
+#       --|--          * pr1 (dx1,dy1)
+#         |           * pr2 (dx2,dy2)       
+#  (0,0)  + -------------            → x
+#   ↓     |           * pr3 (dx3,dy3)       
+#   y   --|--          * pr4 (dx4,dy4)
+#
+# ((dx1,dy1), (dx2,dy2), (dx3,dy3), (dx4,dy4)) 
+#
 LF_MOUNT_POS_PRF = ((120,-60), (100,-20), (100,20), (120,60)) # mm
 LF_WEIGHT = 360    # 車体の重さ g（グラム）
-SHAFT_LENGTH = 50  # シャフト長 mm
+SHAFT_LENGTH = 50  # シャフト長 mm （１本）
 TIRE_DIAMETER = 58 # タイヤ直径 mm
 
-# モデルパラメータ（要調整）
-CONV_COEF_FWD = 1.0 # 前後運動の力への換算係数（形状・重心などに依存）
-CONV_COEF_ROT = 3.0 # 回転運動の力への換算係数（形状・重心などに依存）
-RES_COEF_FWD  = 3.0 # 前後運動の抵抗係数（すべりなどに依存）
-RES_COEF_ROT  = 1.0 # 回転運動の抵抗係数（すべりなどに依存）
+# 制御パラメータ（要調整）
+COEF_K_P = 3.0 # 比例制御係数
+
+# 物理モデルパラメータ（要調整）
+PARAMS_MU_CLIN = 1e-3 # kg/s 車体の直線運動の粘性摩擦係数（便宜上）
+PARAMS_NU_CROT = 1e-4 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
+PARAMS_ELL_C = 30e-3 # m 車体の重心から旋廻中心までの距離 
+PARAMS_N = 58.2 # ギヤ比
+PARAMS_L_C = 2*SHAFT_LENGTH*1e-3 # m 車輪間の距離
+PARAMS_R_W = (1/2)*TIRE_DIAMETER*1e-3 # m 車輪の半径　
+PARAMS_K_T = 2e-3 # N·m/A モータのトルク係数（概算）
+PARAMS_K_B = 2e-3 # V·s/rad モータの逆起電力定数（概算）
+PARAMS_R_A = 2.0  # Ω 電機子抵抗（概算）
+PARAMS_J_C = (1/3)*LF_WEIGHT*1e-3*((160e-3/2)**2+(60e-3/2)**2) # kg·m^2 車体の重心周りの慣性モーメント（概算）
+PARAMS_J_M = (1/2)*(5e-3)*((5e-3)**2) # kg·m^2 電機子の慣性モーメント（概算）
+PARAMS_J_W = (3/4)*(21e-3)*((25e-3)**2+(4e-3)**2) # kg·m^2 車輪の慣性モーメント（概算）
+PARAMS_J_G = 0 # kg·m^2 ギヤの慣性モーメント (ギヤ比 n>>1 より近似)
+PARAMS_NU_M = 1e-6 # kg·m^2/s モータの粘性摩擦係数（概算）
+PARAMS_NU_W = 0 # kg·m^2/s 車輪の粘性摩擦係数 (ギヤ比 n>>1 より近似)
+PARAMS_NU_G = 0 # kg·m^2/s ギヤの粘性摩擦係数 (ギヤ比 n>>1 より近似)
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
@@ -66,7 +90,7 @@ class LFPhysicalModel:
     """ ライントレーサ物理モデルクラス 
         
         ライントレーサの物理モデルを実装しています。
-        モーター制御信号が力に比例するという非常に単純なモデルです。
+        モータ制御信号が力に比例するという非常に単純なモデルです。
         
         左右の和を前後運動、左右の差を回転運動に換算しています。
 
@@ -96,6 +120,66 @@ class LFPhysicalModel:
         for idx in range(NUM_PHOTOREFS):
             self._prs[idx].value = 0.0
         self._controller.photorefs = self._prs
+        
+    def mtrs2twist(self,mtrs,v0,w0,fps):
+        """ モータ制御信号→速度変換
+            h = 1/fps 間隔で制御信号をゼロ次ホールドすると仮定
+        """
+       
+        # 車体重量の換算
+        mc_kg = 1e-3*self._weight # g -> kg
+
+        # モーター電圧から速度・角速度の計算
+        K_p = COEF_K_P
+        u_lin = K_p*(mtrs[0]+mtrs[1]) # 直線運動
+        u_rot = K_p*(mtrs[0]-mtrs[1]) # 回転運動
+
+        # サンプリング間隔
+        h = 1/fps
+
+        # 各種パラメータ
+        n = PARAMS_N
+        r_w = PARAMS_R_W
+        k_t = PARAMS_K_T
+        k_b = PARAMS_K_B
+        R_a = PARAMS_R_A
+        J_w = PARAMS_J_W
+        J_m = PARAMS_J_M
+        J_g = PARAMS_J_G       
+        nu_m = PARAMS_NU_M
+        nu_w = PARAMS_NU_W
+        nu_g = PARAMS_NU_G
+        # 
+        nu_bar_m = nu_m + k_t*k_b/R_a
+        nu_bar_g = nu_g + (n**2)*nu_bar_m
+        J_bar_g = J_g + (n**2)*J_m
+        zeta = n*k_t/R_a 
+
+        # 直線速度の計算
+        mu_clin = PARAMS_MU_CLIN  # 直線運動の粘性摩擦係数
+        #
+        J_lin = J_bar_g + J_w + (1/2)*mc_kg*(r_w**2)
+        T_lin = J_lin / (nu_bar_g + nu_w + (1/2)*mu_clin*(r_w**2)) # 時定数
+        c_lin = (r_w*zeta) / (2*(nu_bar_g + nu_w) + mu_clin*(r_w**2)) # 時定数
+        #
+        v1 = v0*np.exp(-h/T_lin) + c_lin*(1-np.exp(-h/T_lin))*u_lin
+
+        # 回転速度の計算
+        nu_crot = PARAMS_NU_CROT # 回転運動の粘性摩擦係数
+        l_c = PARAMS_ELL_C
+        L_c = PARAMS_L_C
+        J_c = PARAMS_J_C
+        eta = (r_w/L_c)**2
+        #
+        J_rot = J_bar_g + J_w + 2*eta*(J_c + mc_kg*(l_c**2))        
+        T_rot = J_rot / (nu_bar_g + nu_w + 2*eta*nu_crot) # 時定数
+        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + 2*eta*nu_crot)) # 時定数
+        #
+        w1 = w0*np.exp(-h/T_rot) + c_rot*(1-np.exp(-h/T_rot))*u_rot
+
+        # 出力
+        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
+        return twist
 
     def drive(self,fps):
         """ 車体駆動メソッド"""
@@ -106,9 +190,15 @@ class LFPhysicalModel:
         mtrs = np.asarray(self._controller.prs2mtrs())
 
         # 車体状態更新
-        self.updatestate(mtrs,fps)
+        self.updatestate(mtrs,fps)        
+         
+    def updatestate(self,mtrs,fps):
+        """ 車体駆動メソッド （2020）"""
 
-    def updatestate_twist(self,twist,fps):
+        # モータ―制御信号→Twist型
+        v0_m_s = 1e-3*self._v_mm_s # 前時刻直線速度 m/s
+        w0_rad_s = self._w_rad_s   # 前時刻角速度  rad/s
+        twist = self.mtrs2twist(mtrs,v0_m_s,w0_rad_s,fps)
         v1_m_s = twist["linear"]["x"]    # 現時刻直線速度 m/s
         w1_rad_s = twist["angular"]["z"] # 現時刻角速度  rad/s
 
@@ -127,15 +217,6 @@ class LFPhysicalModel:
         self._x_mm = 1e3*pos[0] # m -> mm 
         self._y_mm = 1e3*pos[1] # m -> mm
         self._angle_rad = pos[2]
-         
-    def updatestate(self,mtrs,fps):
-        """ 車体駆動メソッド （2020）"""
-
-        # モータ―制御信号→Twist型
-        v0_m_s = 1e-3*self._v_mm_s # 前時刻直線速度 m/s
-        w0_rad_s = self._w_rad_s   # 前時刻角速度  rad/s
-        twist = self.mtrs2twist(mtrs,v0_m_s,w0_rad_s,fps)        
-        self.updatestate_twist(twist,fps)
 
     def _odefun(self,pos,t,v,w):
         """ 状態方程式 """
@@ -145,43 +226,6 @@ class LFPhysicalModel:
         theta = pos[2]
         return [ np.cos(theta)*v, np.sin(theta)*v, w ]
     
-    def mtrs2twist(self,mtrs,v0,w0,fps):
-        """ モータ制御信号→速度制御信号変換 """
-       
-        # 車体重量の換算
-        weight_kg = 1e-3*self._weight # g -> kg
-
-        # モーターから力の計算
-        forceFwd = mtrs[0]+mtrs[1] #ｔ直線運動
-        forceRot = mtrs[0]-mtrs[1] # 回転運動
-        
-        # 加速度の計算
-        accelFwd = CONV_COEF_FWD*forceFwd/weight_kg
-        accelRot = CONV_COEF_ROT*forceRot/weight_kg
-
-        # 直線速度の計算      
-        #t = np.linspace(0,1/fps,2)
-        #x = odeint(self._h,v0,t,args=(-RES_COEF_FWD/weight_kg,accelFwd))
-        #v1 = x[-1][0]
-        t = 1/fps
-        al = accelFwd
-        cl = -RES_COEF_FWD/weight_kg
-        v1 = -al/cl + np.exp(cl*t)*(al/cl + v0)
-
-        # 回転速度の計算              
-        #z = odeint(self._h,w0,t,args=(-RES_COEF_ROT/weight_kg,accelRot))
-        #w1 = z[-1][0]
-        aa = accelRot
-        ca = -RES_COEF_ROT/weight_kg
-        w1 = -aa/ca + np.exp(ca*t)*(aa/ca + w0)
-
-        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
-        return twist
-    
-    #def _h(self,v,t,c,a):
-    #    # 運動方程式
-    #    return c*v+a
-
     @property
     def course(self):
         return self._course
