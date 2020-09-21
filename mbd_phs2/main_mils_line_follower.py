@@ -25,6 +25,7 @@ COURSE_RES = 2.5 # 解像度
 
 # 色の定義
 BLUE   = (  0, 0, 255 )
+GREEN  = (  0, 255, 0 )
 
 # メイン関数
 def main():
@@ -159,6 +160,7 @@ class LFModelInTheLoopSimulation(object):
         pygame.display.set_caption('ライントレース・シミュレーター')
         font40 = pygame.font.Font(None, 40)
         font20 = pygame.font.Font(None, 20)        
+        elapsedtime = 0 # 経過時間をリセット
 
         while True:
             for event in pygame.event.get():
@@ -176,12 +178,12 @@ class LFModelInTheLoopSimulation(object):
 
             key = pygame.key.get_pressed()
             if self.state == 'sinit': 
-                msg = 'Initializing　...'
+                #msg = 'Initializing　...'
                 # 初期化設定
                 self._linefollower.set_position_mm(60,60) # mm
                 self.initialized()
 
-            msg = font20.render('', True, BLUE) 
+            #msg = '' # font20.render('', True, BLUE) 
             if self.state == 'slocate': 
                 msg = 'Please locate the car with mouse.'
                 # マウスポインタが車体上かつ左クリックならば
@@ -215,6 +217,7 @@ class LFModelInTheLoopSimulation(object):
 
             if self.state == 'swait':
                 msg = 'Please click to run the car.'                                
+                elapsedtime = 0 # 経過時間をリセット
                 if mBtn1 == 1:
                     if not self._flag_drag:
                         self._flag_drag = True
@@ -228,6 +231,7 @@ class LFModelInTheLoopSimulation(object):
                     self.stop()
                 else:
                     self._linefollower.drive(self._fps)
+                    elapsedtime += 1/self._fps # 経過時間を更新
 
             # キーボード入力
             if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
@@ -240,7 +244,13 @@ class LFModelInTheLoopSimulation(object):
             # 画面描画
             self._linefollower.draw_body(self._screen)
             sur = font20.render(msg, True, BLUE)            
-            self._screen.blit(sur,[10,self._height-20])          
+            self._screen.blit(sur,[10,self._height-20])
+            smin = int(elapsedtime/60)%60
+            ssec = int(elapsedtime)%60
+            smsc = int(100*elapsedtime)%100
+            stime = '{:02d}\'{:02d}\"{:02d}'.format(smin,ssec,smsc)
+            surtime = font40.render(stime, True, GREEN)          
+            self._screen.blit(surtime,[self._width-120,self._height-30])
             pygame.display.update()
 
             # クロック

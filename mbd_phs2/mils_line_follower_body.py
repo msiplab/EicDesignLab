@@ -16,6 +16,7 @@
 
 - 三平 満司：「非ホロノミック系のフィードバック制御」計測と制御
 　36 巻 6 号 p. 396-403, 1997 年 
+
 - Gregor Klancar, Andrej Zdesar, Saso Blazic and Igor Skrjanc: "Wheeled Mobile Robotics,"
   Elsevier, 2017
 
