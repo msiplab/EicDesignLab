@@ -121,7 +121,7 @@ class LFPhysicalModel:
         for idx in range(NUM_PHOTOREFS):
             self._prs[idx].value = 0.0
         self._controller.photorefs = self._prs
-        
+
     def mtrs2twist(self,mtrs,v0,w0,fps):
         """ モータ制御信号→速度変換
             h = 1/fps 間隔で制御信号をゼロ次ホールドすると仮定
@@ -163,20 +163,22 @@ class LFPhysicalModel:
         T_lin = J_lin / (nu_bar_g + nu_w + (1/2)*mu_clin*(r_w**2)) # 時定数
         c_lin = (r_w*zeta) / (2*(nu_bar_g + nu_w) + mu_clin*(r_w**2)) 
         #
-        v1 = v0*np.exp(-h/T_lin) + c_lin*(1-np.exp(-h/T_lin))*u_lin
+        #v1 = v0*np.exp(-h/T_lin) + c_lin*(1-np.exp(-h/T_lin))*u_lin
+        v1 = np.exp(-h/T_lin)*( v0 - c_lin*u_lin ) + c_lin*u_lin 
 
         # 回転速度の計算
         nu_crot = PARAMS_NU_CROT # 回転運動の粘性摩擦係数
         l_c = PARAMS_ELL_C
         L_c = PARAMS_L_C
         J_c = PARAMS_J_C
-        eta = (r_w/L_c)**2
+        r_c = (2*r_w/L_c)
         #
-        J_rot = J_bar_g + J_w + 2*eta*(J_c + mc_kg*(l_c**2))        
-        T_rot = J_rot / (nu_bar_g + nu_w + 2*eta*nu_crot) # 時定数
-        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + 2*eta*nu_crot)) 
+        J_rot = J_bar_g + J_w + (1/2)*(J_c + mc_kg*(l_c**2))*(r_c**2)
+        T_rot = J_rot / (nu_bar_g + nu_w + (1/2)*nu_crot*(r_c**2)) # 時定数
+        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + (1/2)*nu_crot*(r_c**2)))
         #
-        w1 = w0*np.exp(-h/T_rot) + c_rot*(1-np.exp(-h/T_rot))*u_rot
+        #w1 = w0*np.exp(-h/T_rot) + c_rot*(1-np.exp(-h/T_rot))*u_rot
+        w1 = np.exp(-h/T_rot)* ( w0 - c_rot*u_rot ) + c_rot*u_rot
 
         # 出力
         twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
@@ -224,9 +226,9 @@ class LFPhysicalModel:
         # d_ (  x ) = ( cosθ )v + ( 0 )ω
         # dt (  y )   ( sinθ )    ( 0 )
         #    (  θ )   (  0   )    ( 1 )
-        theta = pos[2]
-        return [ np.cos(theta)*v, np.sin(theta)*v, w ]
-    
+        phi = pos[2]
+        return [ np.cos(phi)*v, np.sin(phi)*v, w ]
+
     @property
     def course(self):
         return self._course
