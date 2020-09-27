@@ -132,8 +132,10 @@ class LFPhysicalModel:
 
         # モーター電圧から速度・角速度の計算
         K_p = COEF_K_P
-        u_lin = K_p*(mtrs[0]+mtrs[1]) # 直線運動
-        u_rot = K_p*(mtrs[0]-mtrs[1]) # 回転運動
+        u_r = mtrs[1]
+        u_l = mtrs[0]
+        u_lin = COEF_K_P*(u_r + u_l) # 直線運動
+        u_rot = COEF_K_P*(u_r - u_l) # 回転運動
 
         # サンプリング間隔
         h = 1/fps
@@ -305,9 +307,9 @@ class LFPhysicalModel:
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
             if LFPhotoReflector.ACTIVE_WHITE:
-                red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
-            else:
                 red = (int(self._prs[idx].value*255.0), 0, 0)
+            else:
+                red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
             pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):

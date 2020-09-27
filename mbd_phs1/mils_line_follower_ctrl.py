@@ -61,6 +61,7 @@ class LFController:
             for idx in range(len(self._prs)) ])
 
         # モーター制御の強度値を計算（ここを工夫）
+        # Left <- 0 1 2 3 -> Right        
         mat_A = np.array([
             [-1.0,-0.1,0.1,1.0],
             [1.0,0.1,-0.1,-1.0]

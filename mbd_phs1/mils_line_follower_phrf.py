@@ -55,9 +55,9 @@ class LFPhotoReflector:
                 for col in range(-1,2):
                     acc = acc + float(pxarray[x_px+col][y_px+row] > 0)
             if LFPhotoReflector.ACTIVE_WHITE:
-                value = 1.0 - acc/9.0 # 平均値
-            else:
                 value = acc/9.0 # 平均値
+            else:
+                value = 1.0 - acc/9.0 # 平均値
         else:
             value = 0.5
 
