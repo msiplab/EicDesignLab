@@ -53,7 +53,7 @@ COEF_K_P = 3.0 # 比例制御係数
 
 # 物理モデルパラメータ（要調整）
 PARAMS_MU_CLIN = 1e-3 # kg/s 車体の直線運動の粘性摩擦係数（便宜上）
-PARAMS_NU_CROT = 1e-4 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
+PARAMS_IOTA_CROT = 1e-4 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
 PARAMS_ELL_C = 30e-3 # m 車体の重心から旋廻中心までの距離 
 PARAMS_N = 58.2 # ギヤ比
 PARAMS_L_C = 2*SHAFT_LENGTH*1e-3 # m 車輪間の距離
@@ -65,9 +65,9 @@ PARAMS_J_C = (1/3)*LF_WEIGHT*1e-3*((160e-3/2)**2+(60e-3/2)**2) # kg·m^2 車体�
 PARAMS_J_M = (1/2)*(5e-3)*((5e-3)**2) # kg·m^2 電機子の慣性モーメント（概算）
 PARAMS_J_W = (3/4)*(21e-3)*((25e-3)**2+(4e-3)**2) # kg·m^2 車輪の慣性モーメント（概算）
 PARAMS_J_G = 0 # kg·m^2 ギヤの慣性モーメント (ギヤ比 n>>1 より近似)
-PARAMS_NU_M = 1e-6 # kg·m^2/s モータの粘性摩擦係数（概算）
-PARAMS_NU_W = 0 # kg·m^2/s 車輪の粘性摩擦係数 (ギヤ比 n>>1 より近似)
-PARAMS_NU_G = 0 # kg·m^2/s ギヤの粘性摩擦係数 (ギヤ比 n>>1 より近似)
+PARAMS_IOTA_M = 1e-6 # kg·m^2/s モータの粘性摩擦係数（概算）
+PARAMS_IOTA_W = 0 # kg·m^2/s 車輪の粘性摩擦係数 (ギヤ比 n>>1 より近似)
+PARAMS_IOTA_G = 0 # kg·m^2/s ギヤの粘性摩擦係数 (ギヤ比 n>>1 より近似)
 
 # フォトリフレクタ数
 NUM_PHOTOREFS = 4
@@ -149,9 +149,9 @@ class LFPhysicalModel:
         J_w = PARAMS_J_W
         J_m = PARAMS_J_M
         J_g = PARAMS_J_G       
-        nu_m = PARAMS_NU_M
-        nu_w = PARAMS_NU_W
-        nu_g = PARAMS_NU_G
+        nu_m = PARAMS_IOTA_M
+        nu_w = PARAMS_IOTA_W
+        nu_g = PARAMS_IOTA_G
         # 
         nu_bar_m = nu_m + k_t*k_b/R_a
         nu_bar_g = nu_g + (n**2)*nu_bar_m
@@ -169,7 +169,7 @@ class LFPhysicalModel:
         v1 = np.exp(-h/T_lin)*( v0 - c_lin*u_lin ) + c_lin*u_lin 
 
         # 回転速度の計算
-        nu_crot = PARAMS_NU_CROT # 回転運動の粘性摩擦係数
+        nu_crot = PARAMS_IOTA_CROT # 回転運動の粘性摩擦係数
         l_c = PARAMS_ELL_C
         L_c = PARAMS_L_C
         J_c = PARAMS_J_C
