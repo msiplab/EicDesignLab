@@ -134,8 +134,8 @@ class LFPhysicalModel:
         K_p = COEF_K_P
         u_r = mtrs[1]
         u_l = mtrs[0]
-        u_lin = COEF_K_P*(u_r + u_l) # 直線運動
-        u_rot = COEF_K_P*(u_r - u_l) # 回転運動
+        u_lin = COEF_K_P*(u_r + u_l)/2.0 # 直線運動
+        u_rot = COEF_K_P*(u_r - u_l)/2.0 # 回転運動
 
         # サンプリング間隔
         h = 1/fps

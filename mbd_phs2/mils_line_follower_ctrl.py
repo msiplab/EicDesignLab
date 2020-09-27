@@ -63,10 +63,10 @@ class LFController:
         # モーター制御の強度値を計算（ここを工夫）
         # Left <- 0 1 2 3 -> Right
         mat_A = np.array([
-            [-1.0,-0.1,0.1,1.0],
-            [1.0,0.1,-0.1,-1.0]
+            [-1.0,-0.2,0.2,1.0],
+            [1.0,0.2,-0.2,-1.0]
             ])
-        vec_mtrs = np.dot(mat_A,vec_prs)+0.1
+        vec_mtrs = np.dot(mat_A,vec_prs)+0.2
         
         # 出力範囲を[-1,1]に直して出力
         mtr_left, mtr_right = vec_mtrs[0], vec_mtrs[1]

@@ -121,8 +121,8 @@ class LFPhysicalModel:
         # モーター電圧から速度・角速度の計算
         u_r = mtrs[1]
         u_l = mtrs[0]
-        ulin = COEF_K_P*(u_r + u_l) # 直線運動
-        urot = COEF_K_P*(u_r - u_l) # 回転運動
+        ulin = COEF_K_P*(u_r + u_l)/2.0 # 直線運動
+        urot = COEF_K_P*(u_r - u_l)/2.0 # 回転運動
 
         # サンプリング間隔
         h = 1/fps
