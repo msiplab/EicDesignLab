@@ -119,27 +119,32 @@ class LFPhysicalModel:
         mc_kg = 1e-3*self._weight # g -> kg
 
         # モーター電圧から速度・角速度の計算
-        ulin = COEF_K_P*(mtrs[0]+mtrs[1]) # 直線運動
-        urot = COEF_K_P*(mtrs[0]-mtrs[1]) # 回転運動
+        u_r = mtrs[1]
+        u_l = mtrs[0]
+        ulin = COEF_K_P*(u_r + u_l) # 直線運動
+        urot = COEF_K_P*(u_r - u_l) # 回転運動
 
         # サンプリング間隔
         h = 1/fps
-
+        
         # 直線速度の計算      
         mu_clin = PARAMS_MU_CLIN # 直線運動の粘性摩擦係数 
         Tlin = (mc_kg+0.5)/(mu_clin+20)  # 時定数
         clin = 1/(0.4*mu_clin+8)
-        v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
+        #v1 = v0*np.exp(-h/Tlin) + clin*(1.0-np.exp(-h/Tlin))*ulin
+        v1 = np.exp(-h/Tlin)*( v0 - clin*ulin ) + clin*ulin
 
         # 回転速度の計算
         nu_crot = PARAMS_NU_CROT # 回転運動の粘性摩擦係数 
         Trot = (mc_kg+0.5)/(40*nu_crot+20) # 時定数
         crot = 1/(8*nu_crot+0.4)
-        w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot
+        #w1 = w0*np.exp(-h/Trot) + crot*(1.0-np.exp(-h/Trot))*urot
+        w1 = np.exp(-h/Trot)*( w0 - crot*urot ) + crot*urot 
 
         # 出力
         twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
         return twist
+
     def drive(self,fps):
         """ 車体駆動メソッド"""
         # センサ値更新 
@@ -182,8 +187,8 @@ class LFPhysicalModel:
         # d_ (  x ) = ( cosθ )v + ( 0 )ω
         # dt (  y )   ( sinθ )    ( 0 )
         #    (  θ )   (  0   )    ( 1 )
-        theta = pos[2]
-        return [ np.cos(theta)*v, np.sin(theta)*v, w ]
+        phi = pos[2]
+        return [ np.cos(phi)*v, np.sin(phi)*v, w ]
 
     @property
     def course(self):
@@ -261,9 +266,9 @@ class LFPhysicalModel:
             pos = center + np.asarray(self._mntposprs[idx])/res
             pos = (rotate_pos(pos,center,angle)+.5).astype(np.int32).tolist()
             if LFPhotoReflector.ACTIVE_WHITE:
-                red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
-            else:
                 red = (int(self._prs[idx].value*255.0), 0, 0)
+            else:
+                red = (int((1.0-self._prs[idx].value)*255.0), 0, 0)
             pygame.draw.circle(screen, red, pos, 4)
 
     def get_rect_px(self):
