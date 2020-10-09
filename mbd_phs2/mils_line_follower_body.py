@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding: UTF-8
 """
-ライントレーサー物理モデル
+ライントレーサー物理モデル（車体の重心と車輪間の中心がずれたモデル）
 
 説明
 
@@ -52,9 +52,9 @@ TIRE_DIAMETER = 58 # タイヤ直径 mm
 COEF_K_P = 3.0 # 比例制御係数
 
 # 物理モデルパラメータ（要調整）
-PARAMS_MU_CLIN = 1e-3 # kg/s 車体の直線運動の粘性摩擦係数（便宜上）
-PARAMS_IOTA_CROT = 1e-4 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
-PARAMS_ELL_C = 30e-3 # m 車体の重心から旋廻中心までの距離 
+PARAMS_MU_C = 1e-3 # kg/s 車体の直線運動の粘性摩擦係数（便宜上）
+PARAMS_IOTA_C = 1e-4 # kg·m^2/s 車体の旋廻運動の粘性摩擦係数（便宜上）
+PARAMS_ELL_C = 30e-3 # m 車体の重心から車輪間の中心までの距離 
 PARAMS_N = 58.2 # ギヤ比
 PARAMS_L_C = 2*SHAFT_LENGTH*1e-3 # m 車輪間の距離
 PARAMS_R_W = (1/2)*TIRE_DIAMETER*1e-3 # m 車輪の半径　
@@ -63,10 +63,10 @@ PARAMS_K_B = 2e-3 # V·s/rad モータの逆起電力定数（概算）
 PARAMS_R_A = 2.0  # Ω 電機子抵抗（概算）
 PARAMS_J_C = (1/3)*LF_WEIGHT*1e-3*((160e-3/2)**2+(60e-3/2)**2) # kg·m^2 車体の重心周りの慣性モーメント（概算）
 PARAMS_J_M = (1/2)*(5e-3)*((5e-3)**2) # kg·m^2 電機子の慣性モーメント（概算）
-PARAMS_J_W = (3/4)*(21e-3)*((25e-3)**2+(4e-3)**2) # kg·m^2 車輪の慣性モーメント（概算）
+#PARAMS_J_W = (3/4)*(21e-3)*((25e-3)**2+(4e-3)**2) # kg·m^2 車輪の慣性モーメント（概算）
 PARAMS_J_G = 0 # kg·m^2 ギヤの慣性モーメント (ギヤ比 n>>1 より近似)
 PARAMS_IOTA_M = 1e-6 # kg·m^2/s モータの粘性摩擦係数（概算）
-PARAMS_IOTA_W = 0 # kg·m^2/s 車輪の粘性摩擦係数 (ギヤ比 n>>1 より近似)
+#PARAMS_IOTA_W = 0 # kg·m^2/s 車輪の粘性摩擦係数 (ギヤ比 n>>1 より近似)
 PARAMS_IOTA_G = 0 # kg·m^2/s ギヤの粘性摩擦係数 (ギヤ比 n>>1 より近似)
 
 # フォトリフレクタ数
@@ -126,19 +126,35 @@ class LFPhysicalModel:
         """ モータ制御信号→速度変換
             h = 1/fps 間隔で制御信号をゼロ次ホールドすると仮定
         """
-       
-        # 車体重量の換算
-        mc_kg = 1e-3*self._weight # g -> kg
-
-        # モーター電圧から速度・角速度の計算
-        K_p = COEF_K_P
-        u_r = mtrs[1]
-        u_l = mtrs[0]
-        u_lin = COEF_K_P*(u_r + u_l)/2.0 # 直線運動
-        u_rot = COEF_K_P*(u_r - u_l)/2.0 # 回転運動
-
         # サンプリング間隔
         h = 1/fps
+
+        # モーター電圧から速度・角速度の計算
+        u_r = mtrs[1]
+        u_l = mtrs[0]
+        u_lin = (u_r + u_l)/2.0 # 直線運動
+        u_rot = (u_r - u_l)/2.0 # 回転運動
+
+        # 速度・角速度計算（微分方程式の数値解）
+        t = np.linspace(0,h,2)
+        y0 = [ 0.0 for idx in range(2) ]
+        y0[0] = v0
+        y0[1] = w0
+        y1 = odeint(self._odedydt,y0,t,args=(u_lin,u_rot))
+        v1 = y1[-1][0]
+        w1 = y1[-1][1]
+
+        # 出力
+        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
+        return twist
+
+    def _odedydt(self,y,t,u_lin,u_rot):
+        """ 動力学(Dynamic)モデルの状態方程式 """
+        v = y[0]
+        w = y[1]
+
+        # 車体重量の換算
+        mc_kg = 1e-3*self._weight # g -> kg
 
         # 各種パラメータ
         n = PARAMS_N
@@ -146,45 +162,43 @@ class LFPhysicalModel:
         k_t = PARAMS_K_T
         k_b = PARAMS_K_B
         R_a = PARAMS_R_A
-        J_w = PARAMS_J_W
         J_m = PARAMS_J_M
         J_g = PARAMS_J_G       
-        nu_m = PARAMS_IOTA_M
-        nu_w = PARAMS_IOTA_W
-        nu_g = PARAMS_IOTA_G
+        iota_m = PARAMS_IOTA_M
+        iota_g = PARAMS_IOTA_G
         # 
-        nu_bar_m = nu_m + k_t*k_b/R_a
-        nu_bar_g = nu_g + (n**2)*nu_bar_m
+        iota_bar_m = iota_m + k_t*k_b/R_a
+        iota_bar_g = iota_g + (n**2)*iota_bar_m
         J_bar_g = J_g + (n**2)*J_m
         zeta = n*k_t/R_a 
 
         # 直線速度の計算
-        mu_clin = PARAMS_MU_CLIN  # 直線運動の粘性摩擦係数
+        mu_c = PARAMS_MU_C  # 直線運動の粘性摩擦係数
         #
-        J_lin = J_bar_g + J_w + (1/2)*mc_kg*(r_w**2)
-        T_lin = J_lin / (nu_bar_g + nu_w + (1/2)*mu_clin*(r_w**2)) # 時定数
-        c_lin = (r_w*zeta) / (2*(nu_bar_g + nu_w) + mu_clin*(r_w**2)) 
-        #
-        #v1 = v0*np.exp(-h/T_lin) + c_lin*(1-np.exp(-h/T_lin))*u_lin
-        v1 = np.exp(-h/T_lin)*( v0 - c_lin*u_lin ) + c_lin*u_lin 
+        D_lin = iota_bar_g + (1/2)*mu_c*(r_w**2) 
+        J_lin = J_bar_g + (1/2)*mc_kg*(r_w**2)
+        T_lin = J_lin / D_lin # 時定数
+        K_lin = COEF_K_P*(zeta*r_w) / D_lin
+        N_lin = (1/2)*mc_kg*(r_w**2)
 
         # 回転速度の計算
-        nu_crot = PARAMS_IOTA_CROT # 回転運動の粘性摩擦係数
+        iota_c = PARAMS_IOTA_C # 回転運動の粘性摩擦係数
         l_c = PARAMS_ELL_C
         L_c = PARAMS_L_C
         J_c = PARAMS_J_C
         r_c = (2*r_w/L_c)
         #
-        J_rot = J_bar_g + J_w + (1/2)*(J_c + mc_kg*(l_c**2))*(r_c**2)
-        T_rot = J_rot / (nu_bar_g + nu_w + (1/2)*nu_crot*(r_c**2)) # 時定数
-        c_rot = (r_w*zeta) / (L_c*(nu_bar_g + nu_w + (1/2)*nu_crot*(r_c**2)))
-        #
-        #w1 = w0*np.exp(-h/T_rot) + c_rot*(1-np.exp(-h/T_rot))*u_rot
-        w1 = np.exp(-h/T_rot)* ( w0 - c_rot*u_rot ) + c_rot*u_rot
+        D_rot = iota_bar_g + (1/2)*(mu_c*(l_c**2)+iota_c )*(r_c**2)
+        J_rot = J_bar_g + (1/2)*(J_c + mc_kg*(l_c**2))*(r_c**2)
+        T_rot = J_rot / D_rot # 時定数
+        K_rot = COEF_K_P*(zeta*r_c) / D_rot
+        N_rot = (1/2)*mc_kg*(r_c**2)
 
-        # 出力
-        twist = { "linear":{"x":v1, "y":0., "z":0.}, "angular":{"x":0., "y":0., "z":w1} }
-        return twist
+        # dy/dt = f(y,t,v,w)
+        dydt0 = (1/T_lin) * ( -l_c*(N_lin/D_lin)*(-w*w) - v + K_lin*u_lin )
+        dydt1 = (1/T_rot) * ( -l_c*(N_rot/D_rot)*( v*w) - w + K_rot*u_rot )
+
+        return [ dydt0, dydt1 ]
 
     def drive(self,fps):
         """ 車体駆動メソッド"""
@@ -207,7 +221,7 @@ class LFPhysicalModel:
         v1_m_s = twist["linear"]["x"]    # 現時刻直線速度 m/s
         w1_rad_s = twist["angular"]["z"] # 現時刻角速度  rad/s
 
-        # 位置・角度情報更新
+        # 位置・角度情報更新（微分方程式の数値解）
         t = np.linspace(0,1/fps,2)
         pos = [ 0.0 for idx in range(3) ]
         pos[0] = 1e-3*self._x_mm # m
@@ -224,7 +238,7 @@ class LFPhysicalModel:
         self._angle_rad = pos[2]
 
     def _odefun(self,pos,t,v,w):
-        """ 状態方程式 """
+        """ 運動(Kinematic)モデルの状態方程式 """
         # d_ (  x ) = ( cosθ )v + ( 0 )ω
         # dt (  y )   ( sinθ )    ( 0 )
         #    (  θ )   (  0   )    ( 1 )
