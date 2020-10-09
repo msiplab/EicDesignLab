@@ -10,6 +10,31 @@
     - COURSE_IMG # コース画像
     - COURSE_RES # コース画像解像度 
 
+  このプログラムの実行には、以下のモジュールが必要です。
+
+	- pygame
+	- transitions
+
+　* Windows 10 の場合：
+  
+  Windows 10 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
+
+    > py -m pip install pygame transitions
+
+  プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
+
+    > py main_mils_line_follower.py  
+
+  * Raspberry Pi OS の場合：
+
+   Raspberry Pi OS なら、以下のようにしてモジュールをインストールしてください。
+
+    $ python3 -m pip install pygame transitions 
+
+   プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
+   
+　　$ python3 main_mils_line_follwer.py 
+
 All rights revserved 2019-2020 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
