@@ -7,7 +7,7 @@
 
 　コースの切り替えについては以下のプロパティを編集してください。
 
-    - OURSE_IMG  # コース画像
+    - COURSE_IMG  # コース画像
     - COURSE_RES # コース画像解像度 
 
 All rights revserved 2019-2020 (c) Shogo MURAMATSU
