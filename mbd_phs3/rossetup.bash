@@ -35,6 +35,7 @@ fi
 
 # Installation
 sudo apt update
+sudo apt -y upgrade
 sudo apt install ros-melodic-desktop-full
 
 # Environment setup
