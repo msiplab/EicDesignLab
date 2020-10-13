@@ -9,7 +9,7 @@
   
   - LF_MOUNT_POS_PRF # フォトリフレクタの配置
   - LF_WEIGHT        # 車体の重さ g
-  - SHAFT_LENGTH     # シャフト長 mm (１本)
+  - SHAFT_LENGTH     # シャフト長 mm (１本あたり)
   - TIRE_DIAMETER    # タイヤ直径 mm
 
 参考資料
@@ -45,7 +45,7 @@ import pygame
 #
 LF_MOUNT_POS_PRF = ((120,-60), (100,-20), (100,20), (120,60)) # mm
 LF_WEIGHT = 360    # 車体の重さ g（グラム）
-SHAFT_LENGTH = 50  # シャフト長 mm （１本）
+SHAFT_LENGTH = 50  # シャフト長 mm （１本あたり）
 TIRE_DIAMETER = 58 # タイヤ直径 mm
 
 # 制御パラメータ（要調整）
