@@ -22,8 +22,7 @@ def main():
 	# 赤色LED設定
 	red = LED(PIN_LD)
 	# フォトリフレクタ（複数）設定（ボタンとして）
-	photorefs = [ Button(PIN_PR[idx],active_state=True,pull_up=None) \
-	for idx in range(0,len(PIN_PR)) ]
+	photorefs = [ Button(PIN_PR[idx],active_state=True,pull_up=None) for idx in range(0,len(PIN_PR)) ]
 	
 	# ループ処理
 	while True:
