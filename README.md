@@ -47,18 +47,7 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ sudo apt-get dist-upgrade
       $ sudo apt-get install python3-dev python3-setuptools python3-pip
       
-  Docker のインストールは以下の通りです。※TensorFlowのインストールに使います。
       
-      $ sudo apt-get dist-upgrade
-      $ curl -sSL https://get.docker.com | sh
-      $ sudo usermod -aG docker pi
-   
-  ログオフ後，再度ログインしてください。
-  
-- Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
-
-      $ sudo apt-get install python3-pandas
-
 - NumPy 高密度のデータ配列を効率的に格納し処理する ndarray オブジェクトを提供。
 
       $ sudo apt-get install python3-numpy
@@ -66,6 +55,21 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
 - SciPy 統計，最適化，線形代数，信号・画像処理，常微分方程式ソルバなどの機能を提供。
 
       $ sudo apt-get install python3-scipy
+      
+- Pygame 主にゲームを対象としたGUIアプリ制作に役立つモジュールを提供。
+
+      $ sudo apt-get install python3-pygame
+      
+- pytransitions 軽量な有限状態機械オブジェクトを提供。
+
+      $ sudo apt-get install python3-transitions
+
+モデルベースシミュレーションに必要なものはここまで。
+
+- Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
+
+      $ sudo apt-get install python3-pandas
+
 
 - matplotlib (+ seaborn) Pythonの柔軟なデータ可視化機能を提供。
 
@@ -75,10 +79,6 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
 
       $ sudo apt-get install python3-sklearn
 
-- pytransitions 軽量な有限状態機械オブジェクトを提供。
-
-      $ sudo apt-get install python3-transitions
-
 - python-control フィードバック制御システムの分析と設計のための基本的な操作を提供。
 
       $ sudo apt-get install gfortran
@@ -86,9 +86,14 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
       $ sudo pip3 install slycot
       $ sudo pip3 install control
       
-- Pygame 主にゲームを対象としたGUIアプリ制作に役立つモジュールを提供。
-
-      $ sudo apt-get install python3-pygame
+Docker のインストールは以下の通りです。※TensorFlowのインストールに使います。
+    
+      $ sudo apt-get dist-upgrade
+      $ curl -sSL https://get.docker.com | sh
+      $ sudo usermod -aG docker pi
+   
+  ログオフ後，再度ログインしてください。
+        
       
 - TensorFlow 深層学習フレームワークを提供。
 
