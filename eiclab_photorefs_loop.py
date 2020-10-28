@@ -23,7 +23,8 @@ def main():
 	red = LED(PIN_LD)
 	# フォトリフレクタ（複数）設定（ボタンとして）
 	photorefs = [ Button(PIN_PR[idx],active_state=True,pull_up=None) for idx in range(0,len(PIN_PR)) ]
-	# 上記の記述でエラーが出る場合には、以下のコメントアウトされている２行に替えて試してみてください
+	# 上記の記述でエラーが出る場合には、以下のコメントアウトされている3行に替えて試してみてください
+	#photorefs = [ [] for idx in range(0,len(PIN_PR)) ]
 	#for idx in range(0,len(PIN_PR)): 
 	#        photorefs[idx] = Button(PIN_PR[idx],active_state=True,pull_up=None)
 	
