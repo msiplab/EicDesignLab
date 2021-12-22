@@ -45,7 +45,7 @@ import math
 
 # コースデータ画像
 #COURSE_IMG = '../images/lfcourse.png'
-COURSE_IMG = '../images/course2020.png'
+COURSE_IMG = '../images/course2021.png'
 COURSE_RES = 2.5 # 解像度
 
 # 色の定義
