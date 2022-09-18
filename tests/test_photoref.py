@@ -14,7 +14,7 @@
 	> py -m pip install gpiozero pigpio
 
 
-	All rights revserved 2019-2020 (c) Shogo MURAMATSU
+	All rights revserved 2019-2022 (c) Shogo MURAMATSU
 """
 import unittest
 from gpiozero.pins.mock import MockFactory
