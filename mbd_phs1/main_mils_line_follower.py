@@ -15,9 +15,9 @@
 	- pygame
 	- transitions
 
-　* Windows 10 の場合：
+　* Windows 10/11 の場合：
   
-  Windows 10 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
+  Windows 10/11 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
 
     > py -m pip install pygame transitions
 
