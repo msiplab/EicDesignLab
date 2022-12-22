@@ -15,9 +15,9 @@
 	- pygame
 	- transitions
 
-　* Windows 10 の場合：
+　* Windows 10/11 の場合：
   
-  Windows 10 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
+  Windows 10/11 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
 
     > py -m pip install pygame transitions
 
@@ -35,7 +35,7 @@
    
 　　$ python3 main_mils_line_follwer.py 
 
-All rights revserved 2019-2020 (c) Shogo MURAMATSU
+All rights revserved 2019-2022 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
 from transitions import Machine

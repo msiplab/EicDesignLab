@@ -5,7 +5,7 @@
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
-All rights revserved 2019-2020 (c) Shogo MURAMATSU
+All rights revserved 2019-2022 (c) Shogo MURAMATSU
 """
 import pygame
 
