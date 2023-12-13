@@ -66,7 +66,7 @@ class LFController:
             [-1.0,-0.2,0.2,1.0],
             [1.0,0.2,-0.2,-1.0]
             ])
-        vec_mtrs = np.dot(mat_A,vec_prs)+0.2
+        vec_mtrs = np.dot(mat_A,vec_prs)+1.0
         
         # 出力範囲を[-1,1]に直して出力
         mtr_left, mtr_right = vec_mtrs[0], vec_mtrs[1]

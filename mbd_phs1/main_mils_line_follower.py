@@ -16,7 +16,7 @@
 	- transitions
 
 　* Windows 10/11 の場合：
-  
+  ======
   Windows 10/11 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
 
     > py -m pip install pygame transitions
@@ -45,7 +45,7 @@ import math
 
 # コースデータ画像
 #COURSE_IMG = '../images/lfcourse.png'
-COURSE_IMG = '../images/course2022.png'
+COURSE_IMG = '../images/course2023.png'
 COURSE_RES = 2.5 # 解像度
 
 # 色の定義
