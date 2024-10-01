@@ -21,7 +21,7 @@ class LineFollower:
                 
         def prs2mtrs(self):
                 """ フォトリフレクタの値をモーター制御の強度値に変換 """
-	        # フォトリフレクタの値を読み出しとベクトル化
+                # フォトリフレクタの値を読み出しとベクトル化
                 vec_x = np.array([ self.prs[idx].value \
                                  for idx in range(len(self.prs)) ])
                 
