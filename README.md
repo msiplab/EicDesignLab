@@ -32,6 +32,15 @@
 
     $ git stash pop
 
+## Fritzing
+
+製図アプリ Fritzing を WSL2上のUbuntuやRasperrypi OSにインストールする場合は以下のコマンドを実行してください。
+      
+    $ sudo apt-get update
+    $ sudo apt-get upgrade -y
+    $ sudo apt-get install fritzing fritzing-data fritzing-parts
+
+
 ## Wiki
 
 マニュアルの訂正や補足事項など以下の Wiki サイトにまとめています。適宜参照してください。
@@ -45,7 +54,7 @@ Python の便利なモジュールとそのRaspbian 上でのインストール�
 - 準備 パッケージの更新方法は以下の通りです。時間を要するので余裕をもって実施してください。
     
       $ sudo apt-get update
-      $ sudo apt-get upgrade
+      $ sudo apt-get upgrade -y
       $ sudo apt-get dist-upgrade
       $ sudo apt-get install python3-dev python3-setuptools python3-pip
       
