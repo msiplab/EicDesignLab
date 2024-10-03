@@ -6,7 +6,7 @@
 
 ## ダウンロード
 
-[ZIPファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開するか、端末上で以下のコマンドを実行してください。
+[ZIPファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開するか、GitHubアカウントがあれば端末上で以下のコマンドを実行してください。
 
     $ cd ~
     $ git clone https://github.com/msiplab/EicDesignLab.git EicDesignLab
