@@ -18,7 +18,7 @@ def main():
 	PIN_BIN1 = 26
 	PIN_BIN2 = 27
 	# 左右モーター設定(PWM)
-	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2),pwm=True)
+	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2)) #,pwm=True)
 	
 	# ループ処理
 	while True:

@@ -19,7 +19,7 @@ def main():
 	PIN_BIN1 = 26
 	PIN_BIN2 = 27
 	# 左右モーター設定(PWM)
-	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2),pwm=True)
+	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2)) #,pwm=True)
 	
 	# 0.1秒毎周期30（約3秒）のSIN値の信号源
 	srcleft = post_delayed(sin_values(period=30),0.1)

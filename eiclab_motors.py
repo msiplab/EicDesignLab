@@ -19,7 +19,7 @@ def main():
 	PIN_BIN1 = 26
 	PIN_BIN2 = 27
 	# 左右モーター設定(PWM)
-	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2),pwm=True)
+	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2)) #,pwm=True)
 	
 	# 1秒毎の正負パルス値の信号源
 	dirleft = post_delayed(scaled(alternating_values(True) ,-1,1),1)

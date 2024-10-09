@@ -54,8 +54,8 @@ def main():
 
         # 左右モーター設定(PWM)
         motors = Robot(left=(PIN_AIN1,PIN_AIN2), \
-                       right=(PIN_BIN1,PIN_BIN2), \
-                       pwm=True)
+                       right=(PIN_BIN1,PIN_BIN2)) #, \
+                       # pwm=True)
         # フォトリフレクタ（複数）設定（A/D変換）
         photorefs = [ MCP3004(channel=idx) for idx in range(NUM_CH) ]    
 
