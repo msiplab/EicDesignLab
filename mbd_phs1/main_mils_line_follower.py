@@ -35,7 +35,7 @@
    
 　　$ python3 main_mils_line_follwer.py 
 
-All rights revserved 2019-2024 (c) Shogo MURAMATSU
+All rights revserved 2019-2025 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
 from transitions import Machine
@@ -45,7 +45,7 @@ import math
 
 # コースデータ画像
 #COURSE_IMG = '../images/lfcourse.png'
-COURSE_IMG = '../images/course2024.png'
+COURSE_IMG = '../images/course2025.png'
 COURSE_RES = 2.5 # 解像度
 
 # 色の定義
