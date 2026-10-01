@@ -24,7 +24,7 @@
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
-All rights revserved 2019-2023 (c) Shogo MURAMATSU
+All rights reserved 2019-2023 (c) Shogo MURAMATSU
 """
 from mils_line_follower_ctrl import LFController
 from mils_line_follower_phrf import LFPhotoReflector
@@ -157,7 +157,7 @@ class LFPhysicalModel:
         self.updatestate(mtrs,fps)        
          
     def updatestate(self,mtrs,fps):
-        """ 車体駆動メソッド （2020）"""
+        """ 車体状態の更新メソッド """
 
         # モータ―制御信号→Twist型
         v0_m_s = 1e-3*self._v_mm_s # 前時刻直線速度 m/s
@@ -177,18 +177,22 @@ class LFPhysicalModel:
 
         # 状態更新 
         self._v_mm_s = 1e3*v1_m_s # m/s -> mm/s
-        self._rad_s = w1_rad_s
+        self._w_rad_s = w1_rad_s
         self._x_mm = 1e3*pos[0] # m -> mm 
         self._y_mm = 1e3*pos[1] # m -> mm
         self._angle_rad = pos[2]
 
     def _odefun(self,pos,t,v,w):
         """ 状態方程式 """
-        # d_ (  x ) = ( cosθ )v + ( 0 )ω
-        # dt (  y )   ( sinθ )    ( 0 )
-        #    (  θ )   (  0   )    ( 1 )
+        # d_ (  x ) = ( cosθ )v + (  0 )ω
+        # dt (  y )   ( sinθ )    (  0 )
+        #    (  θ )   (  0   )    ( -1 )
+        #
+        # ω は左回り（右の車輪が速いとき）を正とする角速度．
+        # 画面の座標系は y 軸が下向きなので，左回りのとき
+        # 画面上の角度 θ は減少する（dθ/dt = -ω）．
         phi = pos[2]
-        return [ np.cos(phi)*v, np.sin(phi)*v, w ]
+        return [ np.cos(phi)*v, np.sin(phi)*v, -w ]
 
     @property
     def course(self):

@@ -2,3 +2,4 @@ __pycache__
 *~
 .vscode/settings.json
 images/png2bw.m
+lf_sim_*.csv

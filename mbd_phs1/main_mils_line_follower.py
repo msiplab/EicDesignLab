@@ -14,12 +14,14 @@
 
 	- pygame
 	- transitions
+	- numpy
+	- scipy
 
 　* Windows 11 の場合：
   ======
-  Windows 11 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
+  Windows 11 で python.org からダウンロードした Python を使う場合は、以下のようにしてモジュールをインストールしてください。
 
-    > py -m pip install pygame transitions
+    > py -m pip install pygame transitions numpy scipy
 
   プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
 
@@ -29,23 +31,25 @@
 
    Raspberry Pi OS なら、以下のようにしてモジュールをインストールしてください。
 
-    $ python3 -m pip install pygame transitions 
+    $ sudo apt-get install python3-pygame python3-transitions python3-numpy python3-scipy 
 
    プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
    
-　　$ python3 main_mils_line_follwer.py 
+　　$ python3 main_mils_line_follower.py 
 
-All rights revserved 2019-2025 (c) Shogo MURAMATSU
+All rights reserved 2019-2025 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
 from transitions import Machine
 import pygame
 import sys
+import os
 import math
 
-# コースデータ画像
-#COURSE_IMG = '../images/lfcourse.png'
-COURSE_IMG = '../images/course2025.png'
+# コースデータ画像（このファイルの場所を基準にした相対パス）
+IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'images')
+#COURSE_IMG = os.path.join(IMAGES_DIR, 'lfcourse.png')
+COURSE_IMG = os.path.join(IMAGES_DIR, 'course2025.png')
 COURSE_RES = 2.5 # 解像度
 
 # 色の定義
@@ -65,6 +69,9 @@ def main():
         より現実に近い物理モデルは各自で検討してください。
 
     """
+    # pygame の初期化
+    pygame.init()
+
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG,res=COURSE_RES)
 
@@ -148,7 +155,7 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
         {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },        
         {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait',   'after': 'rflag_false' },
-        {'trigger': 'start',       'source': 'swait',   'dest': 'srun' },
+        {'trigger': 'start',       'source': 'swait',   'dest': 'srun',    'after': 'lflag_false' },
         {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': 'reset' },                
         {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit',   'after': 'close'  },
         {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit',   'after': 'close'  },
@@ -181,7 +188,6 @@ class LFModelInTheLoopSimulation(object):
 
     def run(self):
 
-        pygame.init()
         pygame.display.set_caption('ライントレース・シミュレーター')
         font40 = pygame.font.Font(None, 40)
         font20 = pygame.font.Font(None, 20)        
@@ -259,7 +265,7 @@ class LFModelInTheLoopSimulation(object):
                     elapsedtime += 1/self._fps # 経過時間を更新
 
             # キーボード入力
-            if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
+            if key[pygame.K_ESCAPE] == 1: # [ESC] ストップ
                 self.stop()
             if key[pygame.K_SPACE] == 1: # [SPACE] スタート
                 self.start()                                                                

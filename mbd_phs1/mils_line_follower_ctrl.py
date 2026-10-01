@@ -14,7 +14,7 @@
 　
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
-All rights revserved 2019-2023 (c) Shogo MURAMATSU
+All rights reserved 2019-2023 (c) Shogo MURAMATSU
 """
 import numpy as np
 
@@ -27,7 +27,7 @@ class LFController:
         
         ライントレース制御アルゴリズムを実装する。
 
-        入力　フォトリフレクの値 [0,1]x4
+        入力　フォトリフレクタの値 [0,1]x4
         出力　モータ制御信号 [-1,1]x2
     """
     
@@ -56,15 +56,18 @@ class LFController:
         """
 
         # フォトリフレクタの値を読み出しとベクトル化(vec_x)
-        # 白を検出すると 0，黒を検出すると 1
+        # 白を検出すると 1，黒を検出すると 0
         vec_prs = np.array([ self._prs[idx].value \
             for idx in range(len(self._prs)) ])
 
         # モーター制御の強度値を計算（ここを工夫）
         # Left <- 0 1 2 3 -> Right        
+        # 1行目が左モータ，2行目が右モータ．
+        # 例えば左側のセンサが黒（0）を検出すると，左モータが遅く
+        # 右モータが速くなり，車体は左（ラインの方向）に曲がる．
         mat_A = np.array([
-            [-1.0,-0.2,0.2,1.0],
-            [1.0,0.2,-0.2,-1.0]
+            [1.0,0.2,-0.2,-1.0],
+            [-1.0,-0.2,0.2,1.0]
             ])
         vec_mtrs = np.dot(mat_A,vec_prs)+1.0
         

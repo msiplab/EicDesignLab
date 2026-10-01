@@ -10,16 +10,22 @@
     - COURSE_IMG # コース画像
     - COURSE_RES # コース画像解像度 
 
+　走行中のデータ（モータ制御信号，ロータリーエンコーダで計測した車輪の回転数など）は，
+  走行ごとに CSV ファイル（lf_sim_日時.csv）に保存されます。
+  保存しない場合は LOGGING を False にしてください。
+
   このプログラムの実行には、以下のモジュールが必要です。
 
 	- pygame
 	- transitions
+	- numpy
+	- scipy
 
 　* Windows 11 の場合：
   
-  Windows 11 (でpython.orgからダウンロードしてインストールした）ならば、以下のようにしてモジュールをインストールしてください。
+  Windows 11 で python.org からダウンロードした Python を使う場合は、以下のようにしてモジュールをインストールしてください。
 
-    > py -m pip install pygame transitions
+    > py -m pip install pygame transitions numpy scipy
 
   プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
 
@@ -29,24 +35,30 @@
 
    Raspberry Pi OS なら、以下のようにしてモジュールをインストールしてください。
 
-    $ python3 -m pip install pygame transitions 
+    $ sudo apt-get install python3-pygame python3-transitions python3-numpy python3-scipy 
 
    プログラムを実行する際は、main_mils_line_follower.py が存在するディレクトリに移動して、以下のコマンドを実行して下さい。
    
-　　$ python3 main_mils_line_follwer.py 
+　　$ python3 main_mils_line_follower.py 
 
-All rights revserved 2019-2025 (c) Shogo MURAMATSU
+All rights reserved 2019-2025 (c) Shogo MURAMATSU
 """
 from mils_line_follower_body import LFPhysicalModel
+from mils_line_follower_log import LFDataLogger
 from transitions import Machine
 import pygame
 import sys
+import os
 import math
 
-# コースデータ画像
-#COURSE_IMG = '../images/lfcourse.png'
-COURSE_IMG = '../images/course2025.png'
+# コースデータ画像（このファイルの場所を基準にした相対パス）
+IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'images')
+#COURSE_IMG = os.path.join(IMAGES_DIR, 'lfcourse.png')
+COURSE_IMG = os.path.join(IMAGES_DIR, 'course2025.png')
 COURSE_RES = 2.5 # 解像度
+
+# 走行データのログ保存
+LOGGING = True
 
 # 色の定義
 BLUE   = (  0, 0, 255 )
@@ -63,6 +75,9 @@ def main():
         設定しています。より現実に近い物理モデルは各自で検討してください。
 
     """
+    # pygame の初期化
+    pygame.init()
+
     # コースデータの読み込み
     course = LFCourse(COURSE_IMG,res=COURSE_RES)
 
@@ -146,12 +161,12 @@ class LFModelInTheLoopSimulation(object):
         {'trigger': 'initialized', 'source': 'sinit',   'dest': 'slocate' },
         {'trigger': 'located',     'source': 'slocate', 'dest': 'srotate', 'after': 'lflag_false' },        
         {'trigger': 'rotated',     'source': 'srotate', 'dest': 'swait',   'after': 'rflag_false' },
-        {'trigger': 'start',       'source': 'swait',   'dest': 'srun' },
-        {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': 'reset' },                
+        {'trigger': 'start',       'source': 'swait',   'dest': 'srun',    'after': ['lflag_false', 'log_start'] },
+        {'trigger': 'stop',        'source': 'srun',    'dest': 'slocate', 'after': ['log_stop', 'reset'] },                
         {'trigger': 'quit',        'source': 'slocate', 'dest': 'squit',   'after': 'close'  },
         {'trigger': 'quit',        'source': 'srotate', 'dest': 'squit',   'after': 'close'  },
         {'trigger': 'quit',        'source': 'swait',   'dest': 'squit',   'after': 'close'  },
-        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit',   'after': 'close'  }
+        {'trigger': 'quit',        'source': 'srun',    'dest': 'squit',   'after': ['log_stop', 'close'] }
     )
 
     def __init__(self, linefollower, fps = 20):
@@ -177,9 +192,11 @@ class LFModelInTheLoopSimulation(object):
         self._flag_drag = False
         self._flag_rot  = False
 
+        # 走行データのログ保存
+        self._logger = LFDataLogger()
+
     def run(self):
 
-        pygame.init()
         pygame.display.set_caption('ライントレース・シミュレーター')
         font40 = pygame.font.Font(None, 40)
         font20 = pygame.font.Font(None, 20)        
@@ -255,9 +272,14 @@ class LFModelInTheLoopSimulation(object):
                 else:
                     self._linefollower.drive(self._fps)
                     elapsedtime += 1/self._fps # 経過時間を更新
+                    if LOGGING:
+                        self._logger.write(elapsedtime, self._linefollower)
+                    # ロータリーエンコーダの計測値を表示
+                    rpm_l, rpm_r = self._linefollower.read_encoders_rpm()
+                    msg = 'Please click to stop the car.  L: {:.0f} rpm  R: {:.0f} rpm'.format(rpm_l, rpm_r)
 
             # キーボード入力
-            if key[pygame.K_ESCAPE] == 1: # [ESP] ストップ
+            if key[pygame.K_ESCAPE] == 1: # [ESC] ストップ
                 self.stop()
             if key[pygame.K_SPACE] == 1: # [SPACE] スタート
                 self.start()                                                                
@@ -287,6 +309,13 @@ class LFModelInTheLoopSimulation(object):
 
     def reset(self):
         self._linefollower.reset()
+
+    def log_start(self):
+        if LOGGING:
+            self._logger.start()
+
+    def log_stop(self):
+        self._logger.stop()
 
     def close(self):
         pygame.quit()

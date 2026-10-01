@@ -22,10 +22,11 @@
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
-All rights revserved 2019-2023 (c) Shogo MURAMATSU
+All rights reserved 2019-2023 (c) Shogo MURAMATSU
 """
 from mils_line_follower_ctrl import LFController
 from mils_line_follower_phrf import LFPhotoReflector
+from mils_line_follower_enc import LFRotaryEncoder
 from scipy.integrate import odeint
 import numpy as np
 import pygame
@@ -110,6 +111,9 @@ class LFPhysicalModel:
         self._x_mm = SHAFT_LENGTH + 10 # mm
         self._y_mm = SHAFT_LENGTH + 10 # mm
         self._angle_rad = 0.0 # rad
+
+        # 左右の車輪のロータリーエンコーダ
+        self._encs = [ LFRotaryEncoder(), LFRotaryEncoder() ]
 
         # 初期化
         self.reset()
@@ -212,7 +216,7 @@ class LFPhysicalModel:
         self.updatestate(mtrs,fps)        
          
     def updatestate(self,mtrs,fps):
-        """ 車体駆動メソッド （2020）"""
+        """ 車体状態の更新メソッド """
 
         # モータ―制御信号→Twist型
         v0_m_s = 1e-3*self._v_mm_s # 前時刻直線速度 m/s
@@ -232,18 +236,32 @@ class LFPhysicalModel:
 
         # 状態更新 
         self._v_mm_s = 1e3*v1_m_s # m/s -> mm/s
-        self._rad_s = w1_rad_s
+        self._w_rad_s = w1_rad_s
         self._x_mm = 1e3*pos[0] # m -> mm 
         self._y_mm = 1e3*pos[1] # m -> mm
         self._angle_rad = pos[2]
 
+        # ロータリーエンコーダの計測（左右の車輪の角速度から）
+        self._mtrs = (float(mtrs[0]), float(mtrs[1]))
+        r_w = PARAMS_R_W      # 車輪の半径 m
+        half_L = PARAMS_L_C/2 # 車輪間の距離の半分 m
+        omega_l = (v1_m_s - half_L*w1_rad_s)/r_w # 左の車輪の角速度 rad/s
+        omega_r = (v1_m_s + half_L*w1_rad_s)/r_w # 右の車輪の角速度 rad/s
+        self._encs[0].update(omega_l, 1/fps)
+        self._encs[1].update(omega_r, 1/fps)
+        self._wheels_rpm_true = (60*omega_l/(2*np.pi), 60*omega_r/(2*np.pi))
+
     def _odefun(self,pos,t,v,w):
         """ 運動(Kinematic)モデルの状態方程式 """
-        # d_ (  x ) = ( cosθ )v + ( 0 )ω
-        # dt (  y )   ( sinθ )    ( 0 )
-        #    (  θ )   (  0   )    ( 1 )
+        # d_ (  x ) = ( cosθ )v + (  0 )ω
+        # dt (  y )   ( sinθ )    (  0 )
+        #    (  θ )   (  0   )    ( -1 )
+        #
+        # ω は左回り（右の車輪が速いとき）を正とする角速度．
+        # 画面の座標系は y 軸が下向きなので，左回りのとき
+        # 画面上の角度 θ は減少する（dθ/dt = -ω）．
         phi = pos[2]
-        return [ np.cos(phi)*v, np.sin(phi)*v, w ]
+        return [ np.cos(phi)*v, np.sin(phi)*v, -w ]
 
     @property
     def course(self):
@@ -253,9 +271,44 @@ class LFPhysicalModel:
     def angle(self):
         return self._angle_rad
 
+    @property
+    def x_mm(self):
+        return self._x_mm
+
+    @property
+    def y_mm(self):
+        return self._y_mm
+
+    @property
+    def velocity_mm_s(self):
+        return self._v_mm_s
+
+    @property
+    def angular_velocity_rad_s(self):
+        """ 角速度（左回りが正） """
+        return self._w_rad_s
+
+    @property
+    def motor_signals(self):
+        """ 直前の左右のモータ制御信号 """
+        return self._mtrs
+
+    @property
+    def wheels_rpm_true(self):
+        """ 物理モデルから求めた左右の車輪の回転数（真値，後退は負） [rpm] """
+        return self._wheels_rpm_true
+
+    def read_encoders_rpm(self):
+        """ ロータリーエンコーダで計測した左右の車輪の回転数 [rpm] """
+        return (self._encs[0].read_rpm(), self._encs[1].read_rpm())
+
     def reset(self):
         self._v_mm_s = 0.0 # mm/s
         self._w_rad_s = 0.0 # rad/s
+        self._mtrs = (0.0, 0.0)
+        self._wheels_rpm_true = (0.0, 0.0)
+        for enc in self._encs:
+            enc.reset()
 
     def set_position_mm(self,x,y):
         self._x_mm = x # mm
