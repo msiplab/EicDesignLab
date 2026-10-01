@@ -10,6 +10,7 @@
 All rights reserved 2026 (c) Shogo MURAMATSU
 """
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 
@@ -33,12 +34,14 @@ def main(args=None):
     node = LFControllerNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        try:
+            node.destroy_node()
+            rclpy.try_shutdown()
+        except KeyboardInterrupt:  # 終了処理中に再度 Ctrl+C が押された場合
+            pass
 
 
 if __name__ == '__main__':

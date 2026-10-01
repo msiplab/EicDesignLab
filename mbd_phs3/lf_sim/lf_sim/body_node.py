@@ -31,6 +31,7 @@ from datetime import datetime
 
 import numpy as np
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 from ament_index_python.packages import get_package_share_directory
@@ -215,7 +216,8 @@ class LFBodyNode(Node):
     def _open_csv(self):
         stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         self._csv_name = 'lf_sim_{}.csv'.format(stamp)
-        self._csv_file = open(self._csv_name, 'w', newline='', encoding='utf-8')
+        # 1行ごとにファイルへ書き出す（途中で停止しても記録が残るように）
+        self._csv_file = open(self._csv_name, 'w', newline='', encoding='utf-8', buffering=1)
         self._csv = csv.writer(self._csv_file)
         self._csv.writerow(['time_s', 'u_left', 'u_right', 'rpm_left', 'rpm_right',
                             'rpm_left_true', 'rpm_right_true', 'v_m_s', 'w_rad_s',
@@ -237,11 +239,11 @@ class LFBodyNode(Node):
                             '{:.4f}'.format(m.velocity), '{:.3f}'.format(m.angular_velocity),
                             '{:.4f}'.format(x), '{:.4f}'.format(y), '{:.3f}'.format(th)])
 
-    def destroy_node(self):
+    def close_csv(self):
         if self._csv_file is not None:
             self._csv_file.close()
-            self.get_logger().info('saved {}'.format(self._csv_name))
-        super().destroy_node()
+            self._csv_file = None
+            print('saved {}'.format(os.path.abspath(self._csv_name)))
 
 
 def main(args=None):
@@ -249,12 +251,15 @@ def main(args=None):
     node = LFBodyNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        node.close_csv()
+        try:
+            node.destroy_node()
+            rclpy.try_shutdown()
+        except KeyboardInterrupt:  # 終了処理中に再度 Ctrl+C が押された場合
+            pass
 
 
 if __name__ == '__main__':
