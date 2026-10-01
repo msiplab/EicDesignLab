@@ -17,7 +17,7 @@ def main():
 	PIN_AIN2 = 5
 	PIN_BIN1 = 26
 	PIN_BIN2 = 27
-	# 左右モーター設定(ON/OFF)
+	# 左右モーター設定（既定でPWM．±1と0だけを与えるのでON/OFF制御になる）
 	motors = Robot(left=(PIN_AIN1,PIN_AIN2),right=(PIN_BIN1,PIN_BIN2)) #,pwm=False)
 	
 	# ループ処理

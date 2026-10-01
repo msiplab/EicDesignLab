@@ -68,28 +68,29 @@ class TestMotor(unittest.TestCase):
 		ain1_pin = Device.pin_factory.pin(PIN_AIN1)
 		ain2_pin = Device.pin_factory.pin(PIN_AIN2)
 
-		# 実際値
-		motor.forward()
-		sleep(0.1)                
-		valueAIN1Actual = ain1_pin.state
-		valueAIN2Actual = ain2_pin.state
-
-		# 評価
-		self.assertEqual(valueAIN1Actual,valueAIN1FwExpctd)
-		self.assertEqual(valueAIN2Actual,valueAIN2FwExpctd)
-
-		# 実際値
-		motor.stop()
-		sleep(0.1)                
-		valueAIN1Actual = ain1_pin.state
-		valueAIN2Actual = ain2_pin.state
-
-		# 評価
 		try:
+			# 実際値
+			motor.forward()
+			sleep(0.1)
+			valueAIN1Actual = ain1_pin.state
+			valueAIN2Actual = ain2_pin.state
+
+			# 評価
+			self.assertEqual(valueAIN1Actual,valueAIN1FwExpctd)
+			self.assertEqual(valueAIN2Actual,valueAIN2FwExpctd)
+
+			# 実際値
+			motor.stop()
+			sleep(0.1)
+			valueAIN1Actual = ain1_pin.state
+			valueAIN2Actual = ain2_pin.state
+
+			# 評価
 			self.assertEqual(valueAIN1Actual,valueAIN1NuExpctd)
 			self.assertEqual(valueAIN2Actual,valueAIN2NuExpctd)
 			sleep(0.1)
 		finally:
+			# 終了
 			motor.close()
 
 	def test_backward(self):

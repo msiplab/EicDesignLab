@@ -107,7 +107,8 @@ class LFBodyNode(Node):
     # ------------------------------------------------------------------
     def _on_cmd(self, msg):
         if len(msg.data) >= 2:
-            self._cmd = (float(msg.data[0]), float(msg.data[1]))
+            self._cmd = (max(-1.0, min(1.0, float(msg.data[0]))),
+                         max(-1.0, min(1.0, float(msg.data[1]))))  # [-1,1] に制限
             self._cmd_time = self.get_clock().now()
 
     def _on_initialpose(self, msg):

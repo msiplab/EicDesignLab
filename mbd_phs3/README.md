@@ -3,6 +3,7 @@
 `mbd_phs2` の物理モデル（車体の重心と車輪間の中心がずれたモデル）とロータリーエンコーダの模擬を，
 ROS 2 のノードとして動かすシミュレータです。
 Windows 11 の WSL2 上の Ubuntu 24.04 と **ROS 2 Jazzy Jalisco** で動かすことを想定しています。
+Raspberry Pi 4/5 で動かす場合は，Ubuntu 24.04（64bit）を導入してください（Raspberry Pi OS では `ros2setup.bash` は動きません）。
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
@@ -96,8 +97,10 @@ $ ros2 bag record /cmd_motors /photorefs /wheel_rpm /wheel_rpm_true /odom
 $ ros2 bag play （記録したフォルダ名）
 ```
 
-`mbd_phs2` と同じ形式の CSV ファイル（`lf_sim_日時.csv`）で保存することもできます。
-ファイルは `ros2 launch` を実行したディレクトリに作られます。
+走行データを CSV ファイル（`lf_sim_日時.csv`）に保存することもできます。
+列の構成は `mbd_phs2` とほぼ同じですが，長さの単位は m で，座標系は ROS の約束（y 軸が上向き，角度は左回りが正）です。
+`ros2 launch` を1回起動するごとに1つのファイルが，起動したディレクトリに作られます。
+`rpm_left`，`rpm_right`（エンコーダの計測値）は回転の向きを区別しません。
 
 ```
 $ ros2 launch lf_sim lf_sim.launch.py log_csv:=true
