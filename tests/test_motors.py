@@ -2,19 +2,19 @@
 """
 	Mock テスト
 
-	gpiozero と pigpio の導入が必要です。
+	gpiozero の導入が必要です。
 
 	Raspberry Pi OS:
 	
 	$ sudo apt-get update
-	$ sudo apt-get install python3-gpiozero python3-pigpio
+	$ sudo apt-get install python3-gpiozero
 
 	Windows:
 
-	> py -m pip install gpiozero pigpio
+	> py -m pip install gpiozero
 
 
-	All rights revserved 2019-2023 (c) Shogo MURAMATSU
+	All rights reserved 2019-2023 (c) Shogo MURAMATSU
 """
 import unittest
 from gpiozero.pins.mock import MockFactory
