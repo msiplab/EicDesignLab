@@ -254,12 +254,15 @@ def main(args=None):
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except Exception:
+        if rclpy.ok():  # 終了処理中（コンテキストが無効）の例外は無視する
+            raise
     finally:
         node.close_csv()
         try:
             node.destroy_node()
             rclpy.try_shutdown()
-        except KeyboardInterrupt:  # 終了処理中に再度 Ctrl+C が押された場合
+        except (KeyboardInterrupt, Exception):  # 終了処理中に再度 Ctrl+C が押された場合
             pass
 
 
