@@ -40,9 +40,9 @@
 | `tests/` | Mock テストのプログラム（`gpiozero` があれば PC でも実行可） |
 | `services/` | プログラムの自動起動に使うサービスファイル |
 | `fritzing/` | Fritzing のパーツデータ（フォトリフレクタ LBR-127HLD） |
-| `images/` | 各年度のコースの画像 |
-| `mbd_phs1/` | 簡易シミュレータ（簡略パラメータモデル，pygame） |
-| `mbd_phs2/` | 簡易シミュレータ（詳細パラメータモデル，ロータリーエンコーダの模擬と走行データの CSV 保存） |
+| `images/` | 各年度のコースの画像，シミュレータの画面 |
+| `mbd_phs1/` | 簡易シミュレータ（簡略パラメータモデル，pygame，[README](mbd_phs1/README.md)） |
+| `mbd_phs2/` | 簡易シミュレータ（詳細パラメータモデル，ロータリーエンコーダの模擬と走行データの CSV 保存，[README](mbd_phs2/README.md)） |
 | `mbd_phs3/` | ROS 2 版シミュレータ（WSL2 + ROS 2 Jazzy，[README](mbd_phs3/README.md)） |
 | `mbd_phs4/` | Gazebo 版シミュレータ（WSL2 + ROS 2 Jazzy + Gazebo Harmonic，[README](mbd_phs4/README.md)） |
 | `mbd_phs5/` | MATLAB/Simulink 版シミュレータ（物理モデルの同定，ROS 2 との接続，Raspberry Pi へのコード生成，[README](mbd_phs5/README.md)） |
@@ -60,7 +60,7 @@
     $ python3 main_mils_line_follower.py
 
 Windows で python.org の Python を使う場合は `py -m pip install pygame transitions numpy scipy` でモジュールを導入し，`py main_mils_line_follower.py` で実行します。
-`mbd_phs3`・`mbd_phs4`・`mbd_phs5` の使い方は，それぞれの README を参照してください。
+操作の方法や変更してよい場所など，各シミュレータの使い方はそれぞれの README を参照してください。
 
 ## Fritzing
 
