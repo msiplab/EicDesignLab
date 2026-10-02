@@ -3,3 +3,10 @@ __pycache__
 .vscode/settings.json
 images/png2bw.m
 lf_sim_*.csv
+
+# MATLAB/Simulink（mbd_phs5 のモデルはスクリプトで作成する）
+mbd_phs5/*.slx
+*.slxc
+slprj/
+*_ert_rtw/
+*.asv

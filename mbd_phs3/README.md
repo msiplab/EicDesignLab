@@ -7,7 +7,8 @@ Raspberry Pi 4/5 で動かす場合は，Ubuntu 24.04（64bit）を導入して�
 
 「電子情報通信設計製図」新潟大学工学部工学科電子情報通信プログラム
 
-同じ制御ノード（`lf_controller`）を Gazebo の3次元の物理シミュレーションで動かす版は [`mbd_phs4`](../mbd_phs4/README.md) にあります。
+同じ制御ノード（`lf_controller`）を Gazebo の3次元の物理シミュレーションで動かす版は [`mbd_phs4`](../mbd_phs4/README.md) に，
+同じ物理モデルと制御則の MATLAB/Simulink 版は [`mbd_phs5`](../mbd_phs5/README.md) にあります。
 
 ## 構成
 
@@ -80,6 +81,8 @@ $ ros2 launch lf_sim lf_sim.launch.py
   $ ros2 service call /lf_body/set_running std_srvs/srv/SetBool "{data: false}"
   $ ros2 service call /lf_body/set_running std_srvs/srv/SetBool "{data: true}"
   ```
+- `controller:=false` を付けると，制御ノード `lf_controller` を起動しません。
+  MATLAB の制御ノード（[`mbd_phs5`](../mbd_phs5/README.md) の `lf_ros2_controller.m`）など，別の制御ノードで走らせるときに使います。
 
 ## 観測と記録
 

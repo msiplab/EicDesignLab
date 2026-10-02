@@ -45,6 +45,7 @@
 | `mbd_phs2/` | 簡易シミュレータ（詳細パラメータモデル，ロータリーエンコーダの模擬と走行データの CSV 保存） |
 | `mbd_phs3/` | ROS 2 版シミュレータ（WSL2 + ROS 2 Jazzy，[README](mbd_phs3/README.md)） |
 | `mbd_phs4/` | Gazebo 版シミュレータ（WSL2 + ROS 2 Jazzy + Gazebo Harmonic，[README](mbd_phs4/README.md)） |
+| `mbd_phs5/` | MATLAB/Simulink 版シミュレータ（物理モデルの同定，ROS 2 との接続，Raspberry Pi へのコード生成，[README](mbd_phs5/README.md)） |
 | `matlab/` | グループ分けの抽選（MATLAB Live Script） |
 
 本書（テキスト）の配線の約束：モータドライバの A 側（BCM6, 5）が左のモータ，B 側（BCM26, 27）が右のモータ，
@@ -59,7 +60,7 @@
     $ python3 main_mils_line_follower.py
 
 Windows で python.org の Python を使う場合は `py -m pip install pygame transitions numpy scipy` でモジュールを導入し，`py main_mils_line_follower.py` で実行します。
-`mbd_phs3`・`mbd_phs4` の使い方は，それぞれの README を参照してください。
+`mbd_phs3`・`mbd_phs4`・`mbd_phs5` の使い方は，それぞれの README を参照してください。
 
 ## Fritzing
 

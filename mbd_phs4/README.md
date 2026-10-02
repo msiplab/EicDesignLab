@@ -66,6 +66,8 @@ $ ros2 launch lf_gazebo lf_gazebo.launch.py
 
 Gazebo の画面にコースと車体が表示され，車体がラインに沿って走ります。
 画面を表示しない場合は `headless:=true` を付けます。
+`controller:=false` を付けると制御ノード `lf_controller` を起動しないので，
+MATLAB の制御ノード（[`mbd_phs5`](../mbd_phs5/README.md) の `lf_ros2_controller.m`）などで走らせることができます。
 
 観測と記録の方法は `mbd_phs3` と同じです（`ros2 topic echo /wheel_rpm`，`ros2 bag record` など）。
 
