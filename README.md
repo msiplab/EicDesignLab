@@ -2,33 +2,36 @@
 
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=msiplab/EicDesignLab)
 
-講義例題と演習課題例のソースコードを管理しています。
+「電子情報通信設計製図」（新潟大学工学部工学科電子情報通信プログラム）の講義例題と演習課題例のソースコードを管理しています。
+ライントレーサの実機（Raspberry Pi Zero 2 W）で動かす演習のプログラムと，モデルベース開発のためのシミュレータ（Python，ROS 2，Gazebo，MATLAB/Simulink）があります。
+
+上の「Open in MATLAB Online」のボタンを押すと，このリポジトリを MATLAB Online で開けます（`mbd_phs5` のシミュレーションと物理モデルの同定などを，ブラウザで実行できます）。
 
 ## ダウンロード
 
-[ZIPファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開するか、端末上で以下のコマンドを実行してください（GitHub のアカウントは不要です）。
+[ZIP ファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開するか，端末で以下のコマンドを実行してください（GitHub のアカウントは不要です）。
 
     $ cd ~
     $ git clone https://github.com/msiplab/EicDesignLab.git EicDesignLab
 
-`~/EicDesignLab`（ユーザー名が pi の場合は /home/pi/EicDesignLab）の下にファイルが展開されます。
+ホームディレクトリの `~/EicDesignLab`（例えばユーザー名が pi なら `/home/pi/EicDesignLab`）の下にファイルが展開されます。
 
 ## ソースコードの更新
 
-端末上で以下のコマンドを実行してください。
+端末で以下のコマンドを実行してください。
 
     $ cd ~/EicDesignLab
     $ git pull
 
 `~/EicDesignLab` 以下のソースコードが更新されます。
 
-ソースコードを編集しており、更新がうまく行かない場合は以下のコマンドを実行してください。
+ソースコードを編集していて更新がうまく行かない場合は，以下のコマンドを実行してください（編集内容を一時的に退避します）。
 
     $ cd ~/EicDesignLab
     $ git stash
     $ git pull
 
-編集内容を再度反映させる際は以下のコマンドを実行してください。
+退避した編集内容を元に戻すときは，以下のコマンドを実行してください。
 
     $ git stash pop
 
@@ -64,7 +67,7 @@ Windows で python.org の Python を使う場合は `py -m pip install pygame t
 
 ## Fritzing
 
-製図アプリ Fritzing を WSL2 上の Ubuntu や Raspberry Pi OS にインストールする場合は以下のコマンドを実行してください。
+製図アプリ Fritzing を WSL2 上の Ubuntu や Raspberry Pi OS にインストールする場合は，以下のコマンドを実行してください。
 
     $ sudo apt-get update
     $ sudo apt-get upgrade -y
@@ -72,52 +75,52 @@ Windows で python.org の Python を使う場合は `py -m pip install pygame t
 
 ## Wiki
 
-マニュアルの訂正や補足事項など以下の Wiki サイトにまとめています。適宜参照してください。
+過去の版のマニュアルの訂正や補足事項（Fritzing による製図の方法，よくある質問など）を，以下の Wiki サイトにまとめています。最新の内容はテキストを参照してください。
 
 - https://github.com/msiplab/EicDesignLab/wiki
 
-## Pythonモジュール
+## Python モジュール
 
 Python の便利なモジュールとその Raspberry Pi OS 上でのインストール方法をまとめます。
 
-- 準備 パッケージの更新方法は以下の通りです。時間を要するので余裕をもって実施してください。
+- 準備：パッケージの更新方法は以下の通りです。時間がかかるので，余裕をもって実施してください。
 
       $ sudo apt-get update
       $ sudo apt-get upgrade -y
       $ sudo apt-get dist-upgrade
       $ sudo apt-get install python3-dev python3-setuptools python3-pip
 
-- NumPy 高密度のデータ配列を効率的に格納し処理する ndarray オブジェクトを提供。
+- NumPy：多次元のデータ配列を効率的に格納し処理する ndarray オブジェクトを提供。
 
       $ sudo apt-get install python3-numpy
 
-- SciPy 統計，最適化，線形代数，信号・画像処理，常微分方程式ソルバなどの機能を提供。
+- SciPy：統計，最適化，線形代数，信号・画像処理，常微分方程式ソルバなどの機能を提供。
 
       $ sudo apt-get install python3-scipy
 
-- Pygame 主にゲームを対象としたGUIアプリ制作に役立つモジュールを提供。
+- Pygame：主にゲームを対象とした GUI アプリの制作に役立つモジュールを提供。
 
       $ sudo apt-get install python3-pygame
 
-- pytransitions 軽量な有限状態機械オブジェクトを提供。
+- pytransitions：軽量な有限状態機械オブジェクトを提供。
 
       $ sudo apt-get install python3-transitions
 
-モデルベースシミュレーションに必要なものはここまで。
+モデルベースシミュレーション（`mbd_phs1`，`mbd_phs2`）に必要なものはここまでです。
 
-- Pandas ラベル付けされた列指向のデータを効率的に格納し処理するDataFrameオブジェクトを提供。
+- Pandas：ラベル付けされた列指向のデータを効率的に格納し処理する DataFrame オブジェクトを提供。走行データの CSV ファイルの分析に便利です。
 
       $ sudo apt-get install python3-pandas
 
-- matplotlib (+ seaborn) Pythonの柔軟なデータ可視化機能を提供。
+- matplotlib（+ seaborn）：Python の柔軟なデータ可視化機能を提供。
 
       $ sudo apt-get install python3-matplotlib python3-seaborn
 
-- scikit-learn 機械学習アルゴリズムの効率的なPython実装。
+- scikit-learn：機械学習アルゴリズムの効率的な Python 実装。
 
       $ sudo apt-get install python3-sklearn
 
-- python-control フィードバック制御システムの分析と設計のための基本的な操作を提供。
+- python-control：フィードバック制御システムの分析と設計のための基本的な操作を提供。
   Raspberry Pi OS（Bookworm 以降）では `pip` によるシステム全体へのインストールはできないので，仮想環境（venv）にインストールします。
 
       $ sudo apt-get install python3-numpy python3-scipy python3-matplotlib
@@ -125,7 +128,7 @@ Python の便利なモジュールとその Raspberry Pi OS 上でのインス�
       $ source ~/venv/bin/activate
       (venv) $ pip install control
 
-- 深層学習フレームワーク（PyTorch，TensorFlow） ニューラルネットワークの学習と推論の機能を提供。
+- 深層学習フレームワーク（PyTorch，TensorFlow）：ニューラルネットワークの学習と推論の機能を提供。
   どちらも 64bit 環境（64bit 版の Raspberry Pi OS や PC など）向けです。32bit 版の Raspberry Pi OS では利用できません。
   学習には計算量とメモリが必要なので，PC（WSL2 を含む）や Raspberry Pi 4/5 で実施しましょう。
 
@@ -158,4 +161,4 @@ Python の便利なモジュールとその Raspberry Pi OS 上でのインス�
 - [電子情報通信実験Ⅳ](https://github.com/msiplab/EicEngLabIV)
 
 ***
-新潟大学工学部工学科　電子情報通信プログラム　
+新潟大学工学部工学科 電子情報通信プログラム
