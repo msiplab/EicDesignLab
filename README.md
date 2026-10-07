@@ -26,6 +26,7 @@ git に慣れている場合は，`git clone` でも取得できます。
     $ git clone https://github.com/msiplab/EicDesignLab.git
 
 公開リポジトリなので，どちらの方法でも GitHub のアカウントは不要です（アカウントが必要になるのは，自分の変更を GitHub に push するときだけです）。
+git が入っていない PC や，プロキシのある環境では `git clone` が使えないことがあるので，ZIP の方法を基本にします。
 
 ## ソースコードの更新
 
