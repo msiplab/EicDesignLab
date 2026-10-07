@@ -9,21 +9,37 @@
 
 ## ダウンロード
 
-[ZIP ファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開するか，端末で以下のコマンドを実行してください（GitHub のアカウントは不要です）。
+端末で以下のコマンドを実行してください（Raspberry Pi OS や Ubuntu の場合）。ZIP ファイルをダウンロードして展開し，ホームディレクトリの `~/EicDesignLab` に置きます。
 
     $ cd ~
-    $ git clone https://github.com/msiplab/EicDesignLab.git EicDesignLab
+    $ curl -L -o EicDesignLab.zip https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip
+    $ unzip EicDesignLab.zip
+    $ mv EicDesignLab-master EicDesignLab
+    $ rm EicDesignLab.zip
 
-ホームディレクトリの `~/EicDesignLab`（例えばユーザー名が pi なら `/home/pi/EicDesignLab`）の下にファイルが展開されます。
+`unzip` がない場合は `sudo apt-get install unzip` で導入してください。
+ブラウザで [ZIP ファイル](https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip)をダウンロードして展開しても同じです（展開したフォルダ `EicDesignLab-master` を `EicDesignLab` に名前を変えて使います）。
+
+git に慣れている場合は，`git clone` でも取得できます。
+
+    $ cd ~
+    $ git clone https://github.com/msiplab/EicDesignLab.git
+
+公開リポジトリなので，どちらの方法でも GitHub のアカウントは不要です（アカウントが必要になるのは，自分の変更を GitHub に push するときだけです）。
 
 ## ソースコードの更新
 
-端末で以下のコマンドを実行してください。
+ZIP でダウンロードした場合は，もう一度ダウンロードして展開し，古いフォルダと置き換えてください。自分で編集したファイルは，先に別の場所へコピーしておきます。
+
+    $ cd ~
+    $ mv EicDesignLab EicDesignLab_old
+    $ curl -L -o EicDesignLab.zip https://github.com/msiplab/EicDesignLab/archive/refs/heads/master.zip
+    $ unzip EicDesignLab.zip && mv EicDesignLab-master EicDesignLab && rm EicDesignLab.zip
+
+`git clone` で取得した場合は，以下のコマンドで更新できます。
 
     $ cd ~/EicDesignLab
     $ git pull
-
-`~/EicDesignLab` 以下のソースコードが更新されます。
 
 ソースコードを編集していて更新がうまく行かない場合は，以下のコマンドを実行してください（編集内容を一時的に退避します）。
 
